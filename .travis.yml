@@ -1,0 +1,26 @@
+language: php
+
+matrix:
+    include:
+        - php: 7.1
+        - php: 7.2
+        - php: nightly
+    fast_finish: true
+
+before_install:
+  - travis_retry composer self-update
+
+install:
+  - travis_retry composer require --no-update satooshi/php-coveralls:^1.0
+  - travis_retry composer install --no-interaction --prefer-source
+
+before_script:
+  - mkdir -p build/logs
+
+script:
+  - ./vendor/bin/parallel-lint src test
+  - ./vendor/bin/phpunit --verbose --coverage-clover build/logs/clover.xml
+  - ./vendor/bin/phpcs src --standard=psr2 -sp
+
+after_success:
+  - travis_retry php vendor/bin/coveralls
