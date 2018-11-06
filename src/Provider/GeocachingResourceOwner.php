@@ -113,6 +113,26 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
     }
 
     /**
+     * Get resource owner banner url
+     *
+     * @return string|null
+     */
+    public function getBannerUrl()
+    {
+        return $this->getValueByKey($this->response, 'bannerUrl');
+    }
+
+    /**
+     * Get resource profile url
+     *
+     * @return string|null
+     */
+    public function getProfileUrl()
+    {
+        return $this->getValueByKey($this->response, 'url');
+    }
+
+    /**
      * Get resource owner home coordinates
      *
      * @return string|null

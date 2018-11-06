@@ -114,7 +114,8 @@ class Geocaching extends AbstractProvider
      */
     public function getResourceOwnerDetailsUrl(AccessToken $token)
     {
-        return $this->apiDomain . '/v1/users/me';
+        $query = ['fields' => 'referenceCode,findCount,hideCount,favoritePoints,username,membershipLevelId,avatarUrl,bannerUrl,url,homeCoordinates,geocacheLimits'];
+        return $this->apiDomain . '/v1/users/me?' . http_build_query($query);
     }
 
     /**
@@ -141,10 +142,11 @@ class Geocaching extends AbstractProvider
      */
     protected function checkResponse(ResponseInterface $response, $data)
     {
+        if (isset($data['error'])) {
+            throw GeocachingIdentityProviderException::oauthException($response, $data);
+        }
         if ($response->getStatusCode() >= 400) {
             throw GeocachingIdentityProviderException::clientException($response, $data);
-        } elseif (isset($data['error'])) {
-            throw GeocachingIdentityProviderException::oauthException($response, $data);
         }
     }
 

@@ -5,34 +5,22 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 use League\OAuth2\Client\Provider\Geocaching;
 use League\OAuth2\Client\Provider\Exception\GeocachingIdentityProviderException;
 
-define('CLIENT_ID_PRODUCTION',     '');
-define('CLIENT_SECRET_PRODUCTION', '');
-
-define('CLIENT_ID_STAGING',     '');
-define('CLIENT_SECRET_STAGING', '');
+define('GEOCACHING_CLIENT_ID',     '');
+define('GEOCACHING_CLIENT_SECRET', '');
+define('GEOCACHING_ENVIRONMENT',   'staging'); // staging, production
+define('GEOCACHING_CALLBACK',      'http://localhost:8000');
 
 session_start();
 
 // STAGING
 $provider = new Geocaching([
-    'clientId'       => CLIENT_ID_STAGING,
-    'clientSecret'   => CLIENT_SECRET_STAGING,
+    'clientId'       => GEOCACHING_CLIENT_ID,
+    'clientSecret'   => GEOCACHING_CLIENT_SECRET,
     'response_type'  => 'code',
     'scope'          => '*',
-    'redirectUri'    => 'http://localhost:8000',
-    'environment'    => 'staging'
+    'redirectUri'    => GEOCACHING_CALLBACK,
+    'environment'    => GEOCACHING_ENVIRONMENT
 ]);
-
-// PRODUCTION
-// $provider = new League\OAuth2\Client\Provider\Geocaching([
-//     'clientId'       => CLIENT_ID_PRODUCTION,
-//     'clientSecret'   => CLIENT_SECRET_PRODUCTION,
-//     'response_type'  => 'code',
-//     'scope'          => '*',
-//     'redirectUri'    => 'http://localhost:8000',
-//     'environment'    => 'production'
-// ]);
-
 
 if (!isset($_GET['code'])) {
     // If we don't have an authorization code then get one
@@ -59,7 +47,6 @@ if (!isset($_GET['code'])) {
     }
     // Optional: Now you have a token you can look up a users profile data
     try {
-
         // We got an access token, let's now get the user's details
         $user = $provider->getResourceOwner($token);
 
@@ -70,7 +57,6 @@ if (!isset($_GET['code'])) {
         echo "</pre>";
 
     } catch (Exception $e) {
-
         // Failed to get user details
         exit($e->getMessage());
     }
