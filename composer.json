@@ -14,7 +14,8 @@
         "client",
         "authorization",
         "geocaching",
-        "groundspeak"
+        "groundspeak",
+        "pkce"
     ],
     "require": {
         "league/oauth2-client": "^2.0"
@@ -35,5 +36,9 @@
         "psr-4": {
             "League\\OAuth2\\Client\\Test\\": "test/src/"
         }
+    },
+    "scripts": {
+        "phpcs": "./vendor/bin/phpcs src --standard=psr2 -sp",
+        "phpunit": "./vendor/bin/phpunit --verbose "
     }
 }

@@ -3,6 +3,7 @@
 namespace League\OAuth2\Client\Provider;
 
 use League\OAuth2\Client\Provider\Exception\GeocachingIdentityProviderException;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
 use Psr\Http\Message\ResponseInterface;
@@ -89,7 +90,7 @@ class Geocaching extends AbstractProvider
      *
      * @return string
      */
-    public function getBaseAuthorizationUrl()
+    public function getBaseAuthorizationUrl(): string
     {
         return $this->domain . '/oauth/authorize.aspx';
     }
@@ -101,7 +102,7 @@ class Geocaching extends AbstractProvider
      *
      * @return string
      */
-    public function getBaseAccessTokenUrl(array $params)
+    public function getBaseAccessTokenUrl(array $params): string
     {
         return $this->oAuthDomain . '/token';
     }
@@ -112,9 +113,12 @@ class Geocaching extends AbstractProvider
      * @param  AccessToken $token
      * @return string
      */
-    public function getResourceOwnerDetailsUrl(AccessToken $token)
+    public function getResourceOwnerDetailsUrl(AccessToken $token): string
     {
-        $query = ['fields' => 'referenceCode,findCount,hideCount,favoritePoints,username,membershipLevelId,avatarUrl,bannerUrl,url,homeCoordinates,geocacheLimits'];
+        $query = ['fields' => 'referenceCode,findCount,hideCount,favoritePoints,' .
+                              'username,membershipLevelId,avatarUrl,bannerUrl,url,' .
+                              'homeCoordinates,geocacheLimits,optedInFriendSharing',
+                ];
         return $this->apiDomain . '/v1/users/me?' . http_build_query($query);
     }
 
@@ -126,7 +130,7 @@ class Geocaching extends AbstractProvider
      *
      * @return array
      */
-    protected function getDefaultScopes()
+    protected function getDefaultScopes(): array
     {
         return [];
     }
@@ -140,7 +144,7 @@ class Geocaching extends AbstractProvider
      * @param  array $data Parsed response data
      * @return void
      */
-    protected function checkResponse(ResponseInterface $response, $data)
+    protected function checkResponse(ResponseInterface $response, $data): void
     {
         if (isset($data['error'])) {
             throw GeocachingIdentityProviderException::oauthException($response, $data);
@@ -157,10 +161,38 @@ class Geocaching extends AbstractProvider
      * @param AccessToken $token
      * @return \League\OAuth2\Client\Provider\ResourceOwnerInterface
      */
-    protected function createResourceOwner(array $response, AccessToken $token)
+    protected function createResourceOwner(array $response, AccessToken $token): ResourceOwnerInterface
     {
         $user = new GeocachingResourceOwner($response);
 
         return $user->setDomain($this->domain);
+    }
+
+    /**
+     * Generate a random CodeVerifier for PKCE
+     *
+     * @param int $length
+     *
+     * @return string
+     */
+    public static function createCodeVerifier(int $length = 128): string
+    {
+        if ($length < 43 || $length > 128) {
+            throw new \Exception('length must be beetween 43 and 128');
+        }
+
+        return bin2hex(random_bytes(floor($length / 2)));
+    }
+
+    /**
+     * Generate codeVerifier from the codeVerifier for PKCE
+     *
+     * @param  string $codeVerifier
+     * @return string
+     */
+    public static function createCodeChallenge(string $codeVerifier): string
+    {
+        $binarydata = pack('H*', hash('sha256', $codeVerifier));
+        return trim(strtr(base64_encode($binarydata), '+/', '-_'), "=");
     }
 }

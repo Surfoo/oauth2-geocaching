@@ -22,7 +22,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     protected $response;
 
-    /**login/oauth/authorize
+    /**
      * Creates new resource owner.
      *
      * @param array  $response
@@ -150,6 +150,16 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
     public function getGeocacheLimits()
     {
         return $this->getValueByKey($this->response, 'geocacheLimits');
+    }
+
+    /**
+     * Get resource owner opt-in friend sharing
+     *
+     * @return bool
+     */
+    public function getOptedInFriendSharing()
+    {
+        return (bool) $this->getValueByKey($this->response, 'optedInFriendSharing');
     }
 
     /**

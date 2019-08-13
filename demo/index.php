@@ -23,11 +23,18 @@ $provider = new Geocaching([
 ]);
 
 if (!isset($_GET['code'])) {
+    $_SESSION['codeVerifier']  = Geocaching::createCodeVerifier();
+    $_SESSION['codeChallenge'] = Geocaching::createCodeChallenge($_SESSION['codeVerifier']);
+
+    $pkce = ['code_challenge'        => $_SESSION['codeChallenge'],
+             'code_challenge_method' => 'S256',
+    ];
+
     // If we don't have an authorization code then get one
-    $authUrl = $provider->getAuthorizationUrl();
+    $authUrl = $provider->getAuthorizationUrl($pkce);
     $_SESSION['oauth2state'] = $provider->getState();
     header('Location: ' . $authUrl);
-    exit;
+    exit();
 
 // Check given state against previously stored one to mitigate CSRF attack
 } elseif (empty($_GET['state']) || ($_GET['state'] !== $_SESSION['oauth2state'])) {
@@ -40,7 +47,8 @@ if (!isset($_GET['code'])) {
 
     try {
         $token = $provider->getAccessToken('authorization_code', [
-            'code'         => $_GET['code']
+            'code'          => $_GET['code'],
+            'code_verifier' => $_SESSION['codeVerifier'],
         ]);
     } catch(GeocachingIdentityProviderException $e) {
         exit($e->getMessage());
