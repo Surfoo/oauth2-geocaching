@@ -144,7 +144,7 @@ class GeocachingTest extends \PHPUnit\Framework\TestCase
 
         $this->assertEquals($this->provider->domain . '/oauth/authorize.aspx', $this->provider->getBaseAuthorizationUrl());
         $this->assertEquals($this->provider->oAuthDomain . '/token', $this->provider->getBaseAccessTokenUrl([]));
-        $this->assertEquals($this->provider->apiDomain . '/v1/users/me', $this->provider->getResourceOwnerDetailsUrl($token));
+        $this->assertEquals($this->provider->apiDomain . '/v1/users/me?fields=referenceCode%2CfindCount%2ChideCount%2CfavoritePoints%2Cusername%2CmembershipLevelId%2CavatarUrl%2CbannerUrl%2Curl%2ChomeCoordinates%2CgeocacheLimits%2CoptedInFriendSharing', $this->provider->getResourceOwnerDetailsUrl($token));
     }
 
     public function testUserData()
