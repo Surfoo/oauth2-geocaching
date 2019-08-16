@@ -103,6 +103,16 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
     }
 
     /**
+     * Get resource owner joined date UTC
+     *
+     * @return string|null
+     */
+    public function getJoinedDate()
+    {
+        return $this->getValueByKey($this->response, 'joinedDateUtc');
+    }
+
+    /**
      * Get resource owner avatar url
      *
      * @return string|null
@@ -133,6 +143,16 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
     }
 
     /**
+     * Get resource profile text
+     *
+     * @return string|null
+     */
+    public function getProfileText()
+    {
+        return $this->getValueByKey($this->response, 'profileText');
+    }
+
+    /**
      * Get resource owner home coordinates
      *
      * @return string|null
@@ -143,16 +163,6 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
     }
 
     /**
-    * Get resource owner geocache limits
-    *
-    * @return string|null
-    */
-    public function getGeocacheLimits()
-    {
-        return $this->getValueByKey($this->response, 'geocacheLimits');
-    }
-
-    /**
      * Get resource owner opt-in friend sharing
      *
      * @return bool
@@ -160,6 +170,16 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
     public function getOptedInFriendSharing()
     {
         return (bool) $this->getValueByKey($this->response, 'optedInFriendSharing');
+    }
+
+    /**
+    * Get resource owner geocache limits
+    *
+    * @return string|null
+    */
+    public function getGeocacheLimits()
+    {
+        return $this->getValueByKey($this->response, 'geocacheLimits');
     }
 
     /**

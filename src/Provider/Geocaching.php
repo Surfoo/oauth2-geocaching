@@ -116,7 +116,7 @@ class Geocaching extends AbstractProvider
     public function getResourceOwnerDetailsUrl(AccessToken $token): string
     {
         $query = ['fields' => 'referenceCode,findCount,hideCount,favoritePoints,' .
-                              'username,membershipLevelId,avatarUrl,bannerUrl,url,' .
+                              'username,membershipLevelId,joinedDateUtc,avatarUrl,bannerUrl,url,' .
                               'homeCoordinates,geocacheLimits,optedInFriendSharing',
                 ];
         return $this->apiDomain . '/v1/users/me?' . http_build_query($query);
