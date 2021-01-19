@@ -14,8 +14,8 @@ class GeocachingResourceOwnerTest extends \PHPUnit\Framework\TestCase
      */
     protected $user;
 
-    protected function setUp() {
-
+    protected function setUp(): void
+    {
         $this->provider = new \League\OAuth2\Client\Provider\Geocaching([
             'clientId' => 'mock_client_id',
             'clientSecret' => 'mock_secret',
@@ -119,7 +119,8 @@ class GeocachingResourceOwnerTest extends \PHPUnit\Framework\TestCase
         ], $this->user->getGeocacheLimits());
     }
 
-    public function testToArray() {
+    public function testToArray()
+    {
         $this->assertEquals([
             "referenceCode" => "PR27A92",
             "findCount" => 326,

@@ -1,14 +1,14 @@
-<?php 
+<?php
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use League\OAuth2\Client\Provider\Geocaching;
 use League\OAuth2\Client\Provider\Exception\GeocachingIdentityProviderException;
 
-define('GEOCACHING_CLIENT_ID',     '');
+define('GEOCACHING_CLIENT_ID', '');
 define('GEOCACHING_CLIENT_SECRET', '');
-define('GEOCACHING_ENVIRONMENT',   'staging'); // staging, production
-define('GEOCACHING_CALLBACK',      'http://localhost:8000');
+define('GEOCACHING_ENVIRONMENT', 'staging'); // staging, production
+define('GEOCACHING_CALLBACK', 'http://localhost:8000');
 
 session_start();
 
@@ -38,10 +38,8 @@ if (!isset($_GET['code'])) {
 
 // Check given state against previously stored one to mitigate CSRF attack
 } elseif (empty($_GET['state']) || ($_GET['state'] !== $_SESSION['oauth2state'])) {
-
     unset($_SESSION['oauth2state']);
     exit('Invalid state');
-
 } else {
     // Try to get an access token (using the authorization code grant)
 
@@ -50,7 +48,7 @@ if (!isset($_GET['code'])) {
             'code'          => $_GET['code'],
             'code_verifier' => $_SESSION['codeVerifier'],
         ]);
-    } catch(GeocachingIdentityProviderException $e) {
+    } catch (GeocachingIdentityProviderException $e) {
         exit($e->getMessage());
     }
     // Optional: Now you have a token you can look up a users profile data
@@ -63,7 +61,6 @@ if (!isset($_GET['code'])) {
         echo "<pre>";
         print_r($user->toArray());
         echo "</pre>";
-
     } catch (Exception $e) {
         // Failed to get user details
         exit($e->getMessage());

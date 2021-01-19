@@ -9,7 +9,7 @@ class GeocachingTest extends \PHPUnit\Framework\TestCase
 
     protected $provider;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->provider = new \League\OAuth2\Client\Provider\Geocaching([
             'clientId' => 'mock_client_id',
@@ -18,28 +18,29 @@ class GeocachingTest extends \PHPUnit\Framework\TestCase
         ]);
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
         parent::tearDown();
     }
 
-    public function domainProvider() {
+    public function domainProvider()
+    {
         return [
             [
-                'dev', 
+                'dev',
                 \League\OAuth2\Client\Provider\Geocaching::DEV_DOMAIN,
                 \League\OAuth2\Client\Provider\Geocaching::DEV_DOMAIN,
                 \League\OAuth2\Client\Provider\Geocaching::DEV_DOMAIN,
             ],
             [
-                'staging', 
+                'staging',
                 \League\OAuth2\Client\Provider\Geocaching::STAGING_DOMAIN,
                 \League\OAuth2\Client\Provider\Geocaching::STAGING_OAUTH_DOMAIN,
                 \League\OAuth2\Client\Provider\Geocaching::STAGING_API_DOMAIN,
             ],
             [
-                'prod', 
+                'prod',
                 \League\OAuth2\Client\Provider\Geocaching::PRODUCTION_DOMAIN,
                 \League\OAuth2\Client\Provider\Geocaching::PRODUCTION_OAUTH_DOMAIN,
                 \League\OAuth2\Client\Provider\Geocaching::PRODUCTION_API_DOMAIN,
@@ -48,11 +49,10 @@ class GeocachingTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     *
      * @dataProvider domainProvider
      */
-    public function testSetDomains($environment, $expectedDomain, $expectedOAuthDomain, $expectedApiDomain) {
-
+    public function testSetDomains($environment, $expectedDomain, $expectedOAuthDomain, $expectedApiDomain)
+    {
         $this->provider = new \League\OAuth2\Client\Provider\Geocaching([
             'clientId' => 'mock_client_id',
             'clientSecret' => 'mock_secret',
@@ -88,8 +88,7 @@ class GeocachingTest extends \PHPUnit\Framework\TestCase
         $query = ['scope' => implode($scopeSeparator, $options['scope'])];
         $url = $this->provider->getAuthorizationUrl($options);
         $encodedScope = $this->buildQueryString($query);
-        $this->assertContains($encodedScope, $url);
-
+        $this->assertStringContainsString($encodedScope, $url);
     }
 
     public function testGetAuthorizationUrl()
@@ -189,12 +188,9 @@ class GeocachingTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($username, $user->toArray()['username']);
     }
 
-    /**
-     * @expectedException League\OAuth2\Client\Provider\Exception\IdentityProviderException
-     **/
     public function testExceptionThrownWhenErrorObjectReceived()
     {
-        $status = rand(400,600);
+        $status = rand(400, 600);
         $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
         $postResponse->shouldReceive('getBody')->andReturn('{"message": "Validation Failed","errors": [{"resource": "Issue","field": "title","code": "missing_field"}]}');
         $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
@@ -205,12 +201,13 @@ class GeocachingTest extends \PHPUnit\Framework\TestCase
             ->times(1)
             ->andReturn($postResponse);
         $this->provider->setHttpClient($client);
-        $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
+
+        $this->expectException(\League\OAuth2\Client\Provider\Exception\IdentityProviderException::class);
+        $this->expectExceptionMessage('Validation Failed');
+
+        $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
     }
 
-    /**
-     * @expectedException League\OAuth2\Client\Provider\Exception\IdentityProviderException
-     **/
     public function testExceptionThrownWhenOAuthErrorReceived()
     {
         $status = 200;
@@ -224,6 +221,10 @@ class GeocachingTest extends \PHPUnit\Framework\TestCase
             ->times(1)
             ->andReturn($postResponse);
         $this->provider->setHttpClient($client);
-        $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
+
+        $this->expectException(\League\OAuth2\Client\Provider\Exception\IdentityProviderException::class);
+        $this->expectExceptionMessage('bad_verification_code');
+
+        $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
     }
 }
