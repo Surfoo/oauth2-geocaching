@@ -24,28 +24,22 @@ class Geocaching extends AbstractProvider
     const PRODUCTION_API_DOMAIN = 'https://api.groundspeak.com';
     const STAGING_API_DOMAIN = 'https://staging.api.groundspeak.com';
 
-    protected $environment = 'production';
+    protected string $environment = 'production';
 
     /**
      * Main domain
-     *
-     * @var string
      */
-    public $domain;
+    public string $domain;
 
     /**
      * Api domain
-     *
-     * @var string
      */
-    public $apiDomain;
+    public string $apiDomain;
 
     /**
      * OAuth domain
-     *
-     * @var string
      */
-    public $oAuthDomain;
+    public string $oAuthDomain;
 
     /**
      * Constructs an OAuth 2.0 service provider.oAuthDomain
@@ -166,33 +160,5 @@ class Geocaching extends AbstractProvider
         $user = new GeocachingResourceOwner($response);
 
         return $user->setDomain($this->domain);
-    }
-
-    /**
-     * Generate a random CodeVerifier for PKCE
-     *
-     * @param int $length
-     *
-     * @return string
-     */
-    public static function createCodeVerifier(int $length = 128): string
-    {
-        if ($length < 43 || $length > 128) {
-            throw new \Exception('length must be beetween 43 and 128');
-        }
-
-        return bin2hex(random_bytes(floor($length / 2)));
-    }
-
-    /**
-     * Generate codeVerifier from the codeVerifier for PKCE
-     *
-     * @param  string $codeVerifier
-     * @return string
-     */
-    public static function createCodeChallenge(string $codeVerifier): string
-    {
-        $binarydata = pack('H*', hash('sha256', $codeVerifier));
-        return trim(strtr(base64_encode($binarydata), '+/', '-_'), "=");
     }
 }
