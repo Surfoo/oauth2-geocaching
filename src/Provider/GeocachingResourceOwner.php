@@ -10,24 +10,13 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
 
     /**
      * Domain
-     *
-     * @var string
      */
-    protected $domain;
-
-    /**
-     * Raw response
-     *
-     * @var array
-     */
-    protected $response;
+    protected string $domain;
 
     /**
      * Creates new resource owner.
-     *
-     * @param array  $response
      */
-    public function __construct(array $response = array())
+    public function __construct(protected array $response = [])
     {
         $this->response = $response;
     }
@@ -185,11 +174,9 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
     /**
      * Set resource owner domain
      *
-     * @param  string $domain
-     *
      * @return ResourceOwner
      */
-    public function setDomain($domain)
+    public function setDomain(string $domain)
     {
         $this->domain = $domain;
 

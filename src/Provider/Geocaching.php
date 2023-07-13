@@ -12,17 +12,17 @@ class Geocaching extends AbstractProvider
 {
     use BearerAuthorizationTrait;
 
-    const DEV_DOMAIN = 'http://localhost:8000';
-    const DEV_API_DOMAIN = 'http://localhost:8000';
+    final public const DEV_DOMAIN = 'http://localhost:8000';
+    final public const DEV_API_DOMAIN = 'http://localhost:8000';
 
-    const PRODUCTION_DOMAIN = 'https://www.geocaching.com';
-    const STAGING_DOMAIN = 'https://staging.geocaching.com';
+    final public const PRODUCTION_DOMAIN = 'https://www.geocaching.com';
+    final public const STAGING_DOMAIN = 'https://staging.geocaching.com';
 
-    const PRODUCTION_OAUTH_DOMAIN = 'https://oauth.geocaching.com';
-    const STAGING_OAUTH_DOMAIN = 'https://oauth-staging.geocaching.com';
+    final public const PRODUCTION_OAUTH_DOMAIN = 'https://oauth.geocaching.com';
+    final public const STAGING_OAUTH_DOMAIN = 'https://oauth-staging.geocaching.com';
 
-    const PRODUCTION_API_DOMAIN = 'https://api.groundspeak.com';
-    const STAGING_API_DOMAIN = 'https://staging.api.groundspeak.com';
+    final public const PRODUCTION_API_DOMAIN = 'https://api.groundspeak.com';
+    final public const STAGING_API_DOMAIN = 'https://staging.api.groundspeak.com';
 
     protected string $environment = 'production';
 
