@@ -41,7 +41,7 @@
     },
     "scripts": {
         "phpcs": "./vendor/bin/phpcs src --standard=psr2 -sp",
-        "phpunit": "./vendor/bin/phpunit --verbose",
+        "phpunit": "./vendor/bin/phpunit",
         "rector": "./vendor/bin/rector"
     }
 }
