@@ -1,230 +1,204 @@
-<?php namespace League\OAuth2\Client\Test\Provider;
+<?php
 
-use League\OAuth2\Client\Tool\QueryBuilderTrait;
-use Mockery as m;
+namespace League\OAuth2\Client\Test\Provider;
 
-class GeocachingTest extends \PHPUnit\Framework\TestCase
+use InvalidArgumentException;
+use League\OAuth2\Client\Provider\Exception\GeocachingIdentityProviderException;
+use League\OAuth2\Client\Test\Provider\Geocaching as MockProvider;
+use League\OAuth2\Client\Provider\Geocaching as GeocachingProvider;
+use League\OAuth2\Client\Provider\GeocachingResourceOwner;
+use League\OAuth2\Client\Token\AccessToken;
+use Mockery;
+use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use ReflectionClass;
+use ReflectionProperty;
+
+class GeocachingTest extends TestCase
 {
-    use QueryBuilderTrait;
 
     protected $provider;
 
-    protected function setUp(): void
+    public function testRequiredOptions()
     {
-        $this->provider = new \League\OAuth2\Client\Provider\Geocaching([
+        // Additionally, these options are required by the GenericProvider
+        $required = [
             'clientId' => 'mock_client_id',
             'clientSecret' => 'mock_secret',
             'redirectUri' => 'none',
-        ]);
-    }
-
-    public function tearDown(): void
-    {
-        m::close();
-        parent::tearDown();
-    }
-
-    public function domainProvider()
-    {
-        return [
-            [
-                'dev',
-                \League\OAuth2\Client\Provider\Geocaching::DEV_DOMAIN,
-                \League\OAuth2\Client\Provider\Geocaching::DEV_DOMAIN,
-                \League\OAuth2\Client\Provider\Geocaching::DEV_DOMAIN,
-            ],
-            [
-                'staging',
-                \League\OAuth2\Client\Provider\Geocaching::STAGING_DOMAIN,
-                \League\OAuth2\Client\Provider\Geocaching::STAGING_OAUTH_DOMAIN,
-                \League\OAuth2\Client\Provider\Geocaching::STAGING_API_DOMAIN,
-            ],
-            [
-                'prod',
-                \League\OAuth2\Client\Provider\Geocaching::PRODUCTION_DOMAIN,
-                \League\OAuth2\Client\Provider\Geocaching::PRODUCTION_OAUTH_DOMAIN,
-                \League\OAuth2\Client\Provider\Geocaching::PRODUCTION_API_DOMAIN,
-            ],
+            'response_type' => 'code',
+            'scope' => '*',
+            'environment' => 'test',
+            'pkceMethod' => 'S256',
         ];
-    }
 
-    /**
-     * @dataProvider domainProvider
-     */
-    public function testSetDomains($environment, $expectedDomain, $expectedOAuthDomain, $expectedApiDomain)
-    {
-        $this->provider = new \League\OAuth2\Client\Provider\Geocaching([
-            'clientId' => 'mock_client_id',
-            'clientSecret' => 'mock_secret',
-            'redirectUri' => 'none',
-            'environment' => $environment
-        ]);
-        
-        $this->assertEquals($expectedDomain, $this->provider->domain);
-        $this->assertEquals($expectedOAuthDomain, $this->provider->oAuthDomain);
-        $this->assertEquals($expectedApiDomain, $this->provider->apiDomain);
-    }
-    
-    public function testAuthorizationUrl()
-    {
-        $url = $this->provider->getAuthorizationUrl();
-        $uri = parse_url($url);
-        parse_str($uri['query'], $query);
+        foreach ($required as $key => $value) {
+            // Test each of the required options by removing a single value
+            // and attempting to create a new provider.
+            $options = $required;
+            unset($options[$key]);
 
-        $this->assertArrayHasKey('client_id', $query);
-        $this->assertArrayHasKey('redirect_uri', $query);
-        $this->assertArrayHasKey('state', $query);
-        $this->assertArrayHasKey('scope', $query);
-        $this->assertArrayHasKey('response_type', $query);
-        $this->assertArrayHasKey('approval_prompt', $query);
-        $this->assertNotNull($this->provider->getState());
-    }
-
-
-    public function testScopes()
-    {
-        $scopeSeparator = ',';
-        $options = ['scope' => [uniqid(), uniqid()]];
-        $query = ['scope' => implode($scopeSeparator, $options['scope'])];
-        $url = $this->provider->getAuthorizationUrl($options);
-        $encodedScope = $this->buildQueryString($query);
-        $this->assertStringContainsString($encodedScope, $url);
-    }
-
-    public function testGetAuthorizationUrl()
-    {
-        $url = $this->provider->getAuthorizationUrl();
-        $uri = parse_url($url);
-
-        $this->assertEquals('/oauth/authorize.aspx', $uri['path']);
-    }
-
-    public function testGetBaseAccessTokenUrl()
-    {
-        $params = [];
-
-        $url = $this->provider->getBaseAccessTokenUrl($params);
-        $uri = parse_url($url);
-
-        $this->assertEquals('/token', $uri['path']);
-    }
-
-    public function testGetAccessToken()
-    {
-        $response = m::mock('Psr\Http\Message\ResponseInterface');
-        $response->shouldReceive('getBody')->andReturn('{"access_token":"mock_access_token", "scope":"repo,gist", "token_type":"bearer"}');
-        $response->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
-        $response->shouldReceive('getStatusCode')->andReturn(200);
-
-        $client = m::mock('GuzzleHttp\ClientInterface');
-        $client->shouldReceive('send')->times(1)->andReturn($response);
-        $this->provider->setHttpClient($client);
-
-        $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
-
-        $this->assertEquals('mock_access_token', $token->getToken());
-        $this->assertNull($token->getExpires());
-        $this->assertNull($token->getRefreshToken());
-        $this->assertNull($token->getResourceOwnerId());
-    }
-
-    public function testGeocachingEnterpriseDomainUrls()
-    {
-        $response = m::mock('Psr\Http\Message\ResponseInterface');
-        $response->shouldReceive('getBody')->times(1)->andReturn('access_token=mock_access_token&expires=3600&refresh_token=mock_refresh_token&otherKey={1234}');
-        $response->shouldReceive('getHeader')->andReturn(['content-type' => 'application/x-www-form-urlencoded']);
-        $response->shouldReceive('getStatusCode')->andReturn(200);
-
-        $client = m::mock('GuzzleHttp\ClientInterface');
-        $client->shouldReceive('send')->times(1)->andReturn($response);
-        $this->provider->setHttpClient($client);
-
-        $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
-
-        $this->assertEquals($this->provider->domain . '/oauth/authorize.aspx', $this->provider->getBaseAuthorizationUrl());
-        $this->assertEquals($this->provider->oAuthDomain . '/token', $this->provider->getBaseAccessTokenUrl([]));
-        $this->assertEquals($this->provider->apiDomain . '/v1/users/me?fields=referenceCode%2CfindCount%2ChideCount%2CfavoritePoints%2Cusername%2CmembershipLevelId%2CjoinedDateUtc%2CavatarUrl%2CbannerUrl%2Curl%2ChomeCoordinates%2CgeocacheLimits%2CoptedInFriendSharing', $this->provider->getResourceOwnerDetailsUrl($token));
-    }
-
-    public function testUserData()
-    {
-        $userId = 'PR27A92';
-        $username = 'MNofMind';
-
-        $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
-        $postResponse->shouldReceive('getBody')->andReturn('access_token=mock_access_token&expires=3600&refresh_token=mock_refresh_token&otherKey={1234}');
-        $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'application/x-www-form-urlencoded']);
-        $postResponse->shouldReceive('getStatusCode')->andReturn(200);
-
-        $userResponse = m::mock('Psr\Http\Message\ResponseInterface');
-        $userResponse->shouldReceive('getBody')->andReturn('{
-            "referenceCode": "PR27A92",
-            "findCount": 326,
-            "hideCount": 0,
-            "favoritePoints": 18,
-            "username": "MNofMind",
-            "membershipLevelId": 3,
-            "avatarUrl": "https://img-stage.geocaching.com/gcstage/{0}/0640f488-9abe-4c2a-a786-bb75cec84357.gif",
-            "homeCoordinates": {
-              "latitude": 47.6760654544942,
-              "longitude": -122.318150997162
+            try {
+                new GeocachingProvider($options);
+            } catch (\Exception $e) {
+                $this->assertInstanceOf(InvalidArgumentException::class, $e);
             }
-          }');
-        $userResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
-        $userResponse->shouldReceive('getStatusCode')->andReturn(200);
+        }
 
-        $client = m::mock('GuzzleHttp\ClientInterface');
-        $client->shouldReceive('send')
-            ->times(2)
-            ->andReturn($postResponse, $userResponse);
-        $this->provider->setHttpClient($client);
-
-        $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
-        $user = $this->provider->getResourceOwner($token);
-
-        $this->assertEquals($userId, $user->getId());
-        $this->assertEquals($userId, $user->toArray()['referenceCode']);
-        $this->assertEquals($username, $user->getUsername());
-        $this->assertEquals($username, $user->toArray()['username']);
+        new GeocachingProvider($required + []);
     }
 
-    public function testExceptionThrownWhenErrorObjectReceived()
+    public function testConfigurableOptions()
     {
-        $status = rand(400, 600);
-        $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
-        $postResponse->shouldReceive('getBody')->andReturn('{"message": "Validation Failed","errors": [{"resource": "Issue","field": "title","code": "missing_field"}]}');
-        $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
-        $postResponse->shouldReceive('getStatusCode')->andReturn($status);
+        $options = [
+            'clientId'       => 'mock_client_id',
+            'clientSecret'   => 'mock_secret',
+            'environment'    => 'dev',
+            'pkceMethod'     => 'S256',
+            'redirectUri'    => 'none',
+        ];
 
-        $client = m::mock('GuzzleHttp\ClientInterface');
-        $client->shouldReceive('send')
-            ->times(1)
-            ->andReturn($postResponse);
-        $this->provider->setHttpClient($client);
+        $provider = new GeocachingProvider($options + [
+            'response_type'  => 'mock_response_type',
+            'scope'          => '*',
+        ]);
 
-        $this->expectException(\League\OAuth2\Client\Provider\Exception\IdentityProviderException::class);
-        $this->expectExceptionMessage('Validation Failed');
+        foreach ($options as $key => $expected) {
+            $property = new ReflectionProperty(GeocachingProvider::class, $key);
+            $property->setAccessible(true);
 
-        $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
+            $this->assertEquals($expected, $property->getValue($provider));
+        }
+
+        $this->assertEquals('http://localhost:8000/oauth/authorize.aspx', $provider->getBaseAuthorizationUrl());
+        $this->assertEquals('http://localhost:8000/token', $provider->getBaseAccessTokenUrl([]));
+        $this->assertEquals('*', $provider->getDefaultScopes());
+
+        $reflection = new ReflectionClass(get_class($provider));
+
+        $getPkceMethod = $reflection->getMethod('getPkceMethod');
+        $getPkceMethod->setAccessible(true);
+ 
+        $this->assertEquals($options['pkceMethod'], $getPkceMethod->invoke($provider));
     }
 
-    public function testExceptionThrownWhenOAuthErrorReceived()
+    public function testResourceOwnerDetails()
     {
-        $status = 200;
-        $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
-        $postResponse->shouldReceive('getBody')->andReturn('{"error": "bad_verification_code","error_description": "The code passed is incorrect or expired.","error_uri": "https://api.groundspeak.com/documentation"}');
-        $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
-        $postResponse->shouldReceive('getStatusCode')->andReturn($status);
+        $token = new AccessToken(['access_token' => 'mock_token']);
 
-        $client = m::mock('GuzzleHttp\ClientInterface');
-        $client->shouldReceive('send')
-            ->times(1)
-            ->andReturn($postResponse);
-        $this->provider->setHttpClient($client);
+        $provider = new MockProvider([
+            'clientId'       => 'mock_client_id',
+            'clientSecret'   => 'mock_secret',
+            'environment'    => 'dev',
+            'pkceMethod'     => 'S256',
+            'redirectUri'    => 'none',
+        ]);
 
-        $this->expectException(\League\OAuth2\Client\Provider\Exception\IdentityProviderException::class);
-        $this->expectExceptionMessage('bad_verification_code');
+        $user = $provider->getResourceOwner($token);
 
-        $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
+        $this->assertInstanceOf(GeocachingResourceOwner::class, $user);
+        $this->assertEquals('PR1QQQP', $user->getId());
+        $this->assertEquals('PR1QQQP', $user->getReferenceCode());
+        $this->assertEquals('testmock', $user->getUsername());
+        $this->assertEquals('3', $user->getMembershipLevelId());
+        $this->assertEquals('2000-12-31T10:10:10.123', $user->getJoinedDate());
+        $this->assertEquals(42, $user->getFindCount());
+        $this->assertEquals(24, $user->getHideCount());
+        $this->assertEquals(100, $user->getFavoritePoints());
+        $this->assertEquals('https://img.geocaching.com/large/avatar.jpg', $user->getAvatarUrl());
+        $this->assertEquals('https://www.geocaching.com/account/app/ui-images/components/profile/p_bgimage-large.png', $user->getBannerUrl());
+        $this->assertEquals('https://coord.info/PR1QQQP', $user->getProfileUrl());
+        $this->assertEquals('lorem lipsum', $user->getProfileText());
+        $this->assertIsArray($user->getHomeCoordinates());
+        $this->assertTrue($user->getOptedInFriendSharing());
+        $this->assertIsArray($user->getGeocacheLimits());
+
+        $data = $user->toArray();
+
+        $this->assertEquals('PR1QQQP', $data['referenceCode']);
+        $this->assertEquals('testmock', $data['username']);
+        $this->assertEquals('2000-12-31T10:10:10.123', $data['joinedDateUtc']);
+        $this->assertEquals(100, $data['favoritePoints']);
+        $this->assertEquals(3, $data['membershipLevelId']);
+        $this->assertEquals(42, $data['findCount']);
+        $this->assertEquals(24, $data['hideCount']);
+        $this->assertEquals('https://img.geocaching.com/large/avatar.jpg', $data['avatarUrl']);
+        $this->assertEquals('https://www.geocaching.com/account/app/ui-images/components/profile/p_bgimage-large.png', $data['bannerUrl']);
+        $this->assertEquals('https://coord.info/PR1QQQP', $data['url']);
+    }
+
+    public function testCheckResponse()
+    {
+        $mockedResponse = Mockery::mock(ResponseInterface::class);
+        // $response->shouldIgnoreMissing();
+        $mockedResponse->shouldReceive('getStatusCode');
+
+        $options = [
+            'clientId'       => 'mock_client_id',
+            'clientSecret'   => 'mock_secret',
+            'environment'    => 'dev',
+            'pkceMethod'     => 'S256',
+            'redirectUri'    => 'none',
+        ];
+
+        $provider = new GeocachingProvider($options);
+
+        $reflection = new ReflectionClass(get_class($provider));
+        $checkResponse = $reflection->getMethod('checkResponse');
+        $checkResponse->setAccessible(true);
+
+        $this->assertNull($checkResponse->invokeArgs($provider, [$mockedResponse, []]));
+    }
+
+    public function testCheckResponseWithError()
+    {
+        $mockedResponse = Mockery::mock(ResponseInterface::class);
+        // $response->shouldIgnoreMissing();
+        $mockedResponse->shouldNotReceive('getStatusCode');
+        $mockedResponse->shouldReceive('getBody');
+
+        $options = [
+            'clientId'       => 'mock_client_id',
+            'clientSecret'   => 'mock_secret',
+            'environment'    => 'dev',
+            'pkceMethod'     => 'S256',
+            'redirectUri'    => 'none',
+        ];
+
+        $provider = new GeocachingProvider($options);
+
+        $reflection = new ReflectionClass(get_class($provider));
+        $checkResponse = $reflection->getMethod('checkResponse');
+        $checkResponse->setAccessible(true);
+
+        $this->expectException(GeocachingIdentityProviderException::class);
+
+        $checkResponse->invokeArgs($provider, [$mockedResponse, ['error' => 'Bad rssequest']]);
+    }
+
+    public function testCheckResponseWithClientError()
+    {
+        $mockedResponse = Mockery::mock(ResponseInterface::class);
+        $mockedResponse->shouldReceive('getStatusCode')->andReturn(401);
+        $mockedResponse->shouldReceive('getReasonPhrase')->andReturn('Unauthorized');
+        $mockedResponse->shouldReceive('getBody');
+
+        $options = [
+            'clientId'       => 'mock_client_id',
+            'clientSecret'   => 'mock_secret',
+            'environment'    => 'dev',
+            'pkceMethod'     => 'S256',
+            'redirectUri'    => 'none',
+        ];
+
+        $provider = new GeocachingProvider($options);
+
+        $reflection = new ReflectionClass(get_class($provider));
+        $checkResponse = $reflection->getMethod('checkResponse');
+        $checkResponse->setAccessible(true);
+
+        $this->expectException(GeocachingIdentityProviderException::class);
+
+        $checkResponse->invokeArgs($provider, [$mockedResponse, []]);
     }
 }

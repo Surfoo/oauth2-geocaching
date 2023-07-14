@@ -14,12 +14,7 @@
   </testsuites>
   <source>
     <include>
-      <directory suffix=".php">./</directory>
+      <directory suffix=".php">./src</directory>
     </include>
-    <exclude>
-      <directory suffix=".php">./vendor</directory>
-      <directory suffix=".php">./test</directory>
-      <directory suffix=".php">./demo</directory>
-    </exclude>
   </source>
 </phpunit>

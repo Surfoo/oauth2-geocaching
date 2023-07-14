@@ -2,8 +2,8 @@
 
 namespace League\OAuth2\Client\Provider;
 
+use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\GeocachingIdentityProviderException;
-use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
 use Psr\Http\Message\ResponseInterface;
@@ -28,18 +28,41 @@ class Geocaching extends AbstractProvider
 
     /**
      * Main domain
+     * 
+     * @var string
      */
-    public string $domain;
+    public $domain;
 
     /**
      * Api domain
+     * 
+     * @var string
      */
-    public string $apiDomain;
+    public $apiDomain;
 
     /**
      * OAuth domain
+     * 
+     * @var string
      */
-    public string $oAuthDomain;
+    public $oAuthDomain;
+
+    public $clientId;
+
+    public $clientSecret;
+
+    public $redirectUri;
+
+    public $response_type = 'code';
+
+    public $scope = '*';
+
+    public $pkceMethod = 'S256';
+
+    /**
+     * @var string
+     */
+    private $responseResourceOwnerId = 'referenceCode';
 
     /**
      * Constructs an OAuth 2.0 service provider.oAuthDomain
@@ -54,6 +77,8 @@ class Geocaching extends AbstractProvider
      */
     public function __construct(array $options = [], array $collaborators = [])
     {
+        $this->assertRequiredOptions($options);
+
         parent::__construct($options, $collaborators);
 
         switch ($this->environment) {
@@ -76,6 +101,49 @@ class Geocaching extends AbstractProvider
                 $this->domain = self::PRODUCTION_DOMAIN;
                 $this->apiDomain = self::PRODUCTION_API_DOMAIN;
                 $this->oAuthDomain = self::PRODUCTION_OAUTH_DOMAIN;
+        }
+    }
+
+    /**
+     * Returns all options that can be configured.
+     * 
+     * @return array
+     */
+    protected function getConfigurableOptions()
+    {
+        return array_merge($this->getRequiredOptions(), [
+            'clientId',
+            'clientSecret',
+            'redirectUri',
+            'environment',
+            'pkceMethod',
+        ]);
+    }
+
+    /**
+     * Returns all options that are required.
+     *
+     * @return array
+     */
+    protected function getRequiredOptions()
+    {
+        return [
+            'clientId',
+            'clientSecret',
+            'redirectUri',
+            'environment',
+            'pkceMethod',
+        ];
+    }
+
+    private function assertRequiredOptions(array $options)
+    {
+        $missing = array_diff_key(array_flip($this->getRequiredOptions()), $options);
+
+        if (!empty($missing)) {
+            throw new InvalidArgumentException(
+                'Required options not defined: ' . implode(', ', array_keys($missing))
+            );
         }
     }
 
@@ -117,16 +185,19 @@ class Geocaching extends AbstractProvider
     }
 
     /**
-     * Get the default scopes used by this provider.
-     *
-     * This should not be a complete list of all scopes, but the minimum
-     * required for the provider user interface!
-     *
-     * @return array
+     * @return string
      */
-    protected function getDefaultScopes(): array
+    public function getDefaultScopes()
     {
-        return [];
+        return $this->scope;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getPkceMethod()
+    {
+        return $this->pkceMethod;
     }
 
     /**
@@ -135,7 +206,7 @@ class Geocaching extends AbstractProvider
      * @link   https://api.groundspeak.com/documentation#responses
      * @throws IdentityProviderException
      * @param  ResponseInterface $response
-     * @param  array $data Parsed response data
+     * @param  array|string $data Parsed response data
      * @return void
      */
     protected function checkResponse(ResponseInterface $response, $data): void
@@ -149,16 +220,10 @@ class Geocaching extends AbstractProvider
     }
 
     /**
-     * Generate a user object from a successful user details request.
-     *
-     * @param array $response
-     * @param AccessToken $token
-     * @return \League\OAuth2\Client\Provider\ResourceOwnerInterface
+     * @inheritdoc
      */
-    protected function createResourceOwner(array $response, AccessToken $token): ResourceOwnerInterface
+    protected function createResourceOwner(array $response, AccessToken $token)
     {
-        $user = new GeocachingResourceOwner($response);
-
-        return $user->setDomain($this->domain);
+        return new GeocachingResourceOwner($response, $this->responseResourceOwnerId);
     }
 }

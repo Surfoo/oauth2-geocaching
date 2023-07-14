@@ -6,7 +6,16 @@ use League\OAuth2\Client\Tool\ArrayAccessorTrait;
 
 class GeocachingResourceOwner implements ResourceOwnerInterface
 {
-    use ArrayAccessorTrait;
+
+    /**
+     * @var array
+     */
+    protected $response;
+
+    /**
+     * @var string
+     */
+    protected $resourceOwnerId;
 
     /**
      * Domain
@@ -14,21 +23,23 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
     protected string $domain;
 
     /**
-     * Creates new resource owner.
+     * @param array $response
+     * @param string $resourceOwnerId
      */
-    public function __construct(protected array $response = [])
+    public function __construct(array $response, $resourceOwnerId)
     {
         $this->response = $response;
+        $this->resourceOwnerId = $resourceOwnerId;
     }
 
     /**
-     * Get resource owner reference code
+     * Returns the identifier of the authorized resource owner.
      *
-     * @return string|null
+     * @return mixed
      */
     public function getId()
     {
-        return $this->getReferenceCode();
+        return $this->response[$this->resourceOwnerId];
     }
 
     /**
@@ -38,7 +49,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getReferenceCode()
     {
-        return $this->getValueByKey($this->response, 'referenceCode');
+        return $this->response['referenceCode'];
     }
 
     /**
@@ -48,7 +59,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getFindCount()
     {
-        return $this->getValueByKey($this->response, 'findCount');
+        return $this->response['findCount'];
     }
 
     /**
@@ -58,7 +69,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getHideCount()
     {
-        return $this->getValueByKey($this->response, 'hideCount');
+        return $this->response['hideCount'];
     }
 
     /**
@@ -68,7 +79,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getFavoritePoints()
     {
-        return $this->getValueByKey($this->response, 'favoritePoints');
+        return $this->response['favoritePoints'];
     }
 
     /**
@@ -78,7 +89,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getUsername()
     {
-        return $this->getValueByKey($this->response, 'username');
+        return $this->response['username'];
     }
 
     /**
@@ -88,7 +99,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getMembershipLevelId()
     {
-        return $this->getValueByKey($this->response, 'membershipLevelId');
+        return $this->response['membershipLevelId'];
     }
 
     /**
@@ -98,7 +109,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getJoinedDate()
     {
-        return $this->getValueByKey($this->response, 'joinedDateUtc');
+        return $this->response['joinedDateUtc'];
     }
 
     /**
@@ -108,7 +119,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getAvatarUrl()
     {
-        return $this->getValueByKey($this->response, 'avatarUrl');
+        return $this->response['avatarUrl'];
     }
 
     /**
@@ -118,7 +129,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getBannerUrl()
     {
-        return $this->getValueByKey($this->response, 'bannerUrl');
+        return $this->response['bannerUrl'];
     }
 
     /**
@@ -128,7 +139,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getProfileUrl()
     {
-        return $this->getValueByKey($this->response, 'url');
+        return $this->response['url'];
     }
 
     /**
@@ -138,7 +149,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getProfileText()
     {
-        return $this->getValueByKey($this->response, 'profileText');
+        return $this->response['profileText'];
     }
 
     /**
@@ -148,7 +159,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getHomeCoordinates()
     {
-        return $this->getValueByKey($this->response, 'homeCoordinates');
+        return $this->response['homeCoordinates'];
     }
 
     /**
@@ -158,7 +169,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      */
     public function getOptedInFriendSharing()
     {
-        return (bool) $this->getValueByKey($this->response, 'optedInFriendSharing');
+        return (bool) $this->response['optedInFriendSharing'];
     }
 
     /**
@@ -168,19 +179,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
     */
     public function getGeocacheLimits()
     {
-        return $this->getValueByKey($this->response, 'geocacheLimits');
-    }
-
-    /**
-     * Set resource owner domain
-     *
-     * @return ResourceOwner
-     */
-    public function setDomain(string $domain)
-    {
-        $this->domain = $domain;
-
-        return $this;
+        return $this->response['geocacheLimits'];
     }
 
     /**
