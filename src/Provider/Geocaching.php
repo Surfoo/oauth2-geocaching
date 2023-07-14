@@ -12,37 +12,37 @@ class Geocaching extends AbstractProvider
 {
     use BearerAuthorizationTrait;
 
-    final public const DEV_DOMAIN = 'http://localhost:8000';
-    final public const DEV_API_DOMAIN = 'http://localhost:8000';
+    public const DEV_DOMAIN = 'http://localhost:8000';
+    public const DEV_API_DOMAIN = 'http://localhost:8000';
 
-    final public const PRODUCTION_DOMAIN = 'https://www.geocaching.com';
-    final public const STAGING_DOMAIN = 'https://staging.geocaching.com';
+    public const PRODUCTION_DOMAIN = 'https://www.geocaching.com';
+    public const STAGING_DOMAIN = 'https://staging.geocaching.com';
 
-    final public const PRODUCTION_OAUTH_DOMAIN = 'https://oauth.geocaching.com';
-    final public const STAGING_OAUTH_DOMAIN = 'https://oauth-staging.geocaching.com';
+    public const PRODUCTION_OAUTH_DOMAIN = 'https://oauth.geocaching.com';
+    public const STAGING_OAUTH_DOMAIN = 'https://oauth-staging.geocaching.com';
 
-    final public const PRODUCTION_API_DOMAIN = 'https://api.groundspeak.com';
-    final public const STAGING_API_DOMAIN = 'https://staging.api.groundspeak.com';
+    public const PRODUCTION_API_DOMAIN = 'https://api.groundspeak.com';
+    public const STAGING_API_DOMAIN = 'https://staging.api.groundspeak.com';
 
     protected string $environment = 'production';
 
     /**
      * Main domain
-     * 
+     *
      * @var string
      */
     public $domain;
 
     /**
      * Api domain
-     * 
+     *
      * @var string
      */
     public $apiDomain;
 
     /**
      * OAuth domain
-     * 
+     *
      * @var string
      */
     public $oAuthDomain;
@@ -103,7 +103,7 @@ class Geocaching extends AbstractProvider
 
     /**
      * Returns all options that can be configured.
-     * 
+     *
      * @return array
      */
     protected function getConfigurableOptions()

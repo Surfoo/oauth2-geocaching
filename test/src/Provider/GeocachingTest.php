@@ -4,7 +4,7 @@ namespace League\OAuth2\Client\Test\Provider;
 
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\GeocachingIdentityProviderException;
-use League\OAuth2\Client\Test\Provider\Geocaching as MockProvider;
+use League\OAuth2\Client\Test\Geocaching as MockProvider;
 use League\OAuth2\Client\Provider\Geocaching as GeocachingProvider;
 use League\OAuth2\Client\Provider\GeocachingResourceOwner;
 use League\OAuth2\Client\Token\AccessToken;

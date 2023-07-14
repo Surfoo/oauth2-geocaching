@@ -1,6 +1,6 @@
 <?php
 
-namespace League\OAuth2\Client\Test\Provider;
+namespace League\OAuth2\Client\Test;
 
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Provider\Geocaching as GeocachingProvider;
