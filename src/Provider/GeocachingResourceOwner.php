@@ -13,23 +13,16 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
     protected $response;
 
     /**
-     * @var string
-     */
-    protected $resourceOwnerId;
-
-    /**
      * Domain
      */
     protected string $domain;
 
     /**
-     * @param array $response
      * @param string $resourceOwnerId
      */
-    public function __construct(array $response, $resourceOwnerId)
+    public function __construct(array $response, protected $resourceOwnerId)
     {
         $this->response = $response;
-        $this->resourceOwnerId = $resourceOwnerId;
     }
 
     /**

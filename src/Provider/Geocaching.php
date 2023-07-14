@@ -59,10 +59,7 @@ class Geocaching extends AbstractProvider
 
     public $pkceMethod = 'S256';
 
-    /**
-     * @var string
-     */
-    private $responseResourceOwnerId = 'referenceCode';
+    private string $responseResourceOwnerId = 'referenceCode';
 
     /**
      * Constructs an OAuth 2.0 service provider.oAuthDomain
