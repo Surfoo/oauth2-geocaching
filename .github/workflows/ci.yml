@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: [ '8.0', '8.1', '8.2' ]
+        php-version: [ '8.1', '8.2', '8.3' ]
     steps:
       - uses: "actions/checkout@v2"
       - uses: "shivammathur/setup-php@v2"
@@ -47,15 +47,19 @@ jobs:
       - name: "Check coding standards"
         run: "./vendor/bin/phpcs src --standard=psr2 -sp --colors"
 
-  coverage:
-    name: "Coverage"
+  unit-tests:
+    name: "Unit Tests"
     runs-on: "ubuntu-latest"
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: [ '8.1', '8.2', '8.3' ]
     steps:
       - uses: "actions/checkout@v2"
       - uses: "shivammathur/setup-php@v2"
         with:
-          php-version: "latest"
-          coverage: "pcov"
+          php-version: "${{ matrix.php-version }}"
+          coverage: "xdebug"
           ini-values: "memory_limit=-1, zend.assertions=1, error_reporting=-1, display_errors=On"
           tools: "composer"
       - name: "Prepare for tests"
@@ -65,24 +69,3 @@ jobs:
         run: "./vendor/bin/phpunit --colors=always --coverage-clover build/logs/clover.xml --coverage-text"
       - name: "Publish coverage report to Codecov"
         uses: "codecov/codecov-action@v2"
-
-  unit-tests:
-    name: "Unit Tests"
-    runs-on: "ubuntu-latest"
-    strategy:
-      fail-fast: false
-      matrix:
-        php-version: [ '8.0', '8.1', '8.2' ]
-    steps:
-      - uses: "actions/checkout@v2"
-      - uses: "shivammathur/setup-php@v2"
-        with:
-          php-version: "${{ matrix.php-version }}"
-          coverage: "none"
-          ini-values: "memory_limit=-1, zend.assertions=1, error_reporting=-1, display_errors=On"
-          tools: "composer"
-      - name: "Prepare for tests"
-        run: "mkdir -p build/logs"
-      - uses: "ramsey/composer-install@v2"
-      - name: "Run unit tests"
-        run: "./vendor/bin/phpunit --colors=always"
