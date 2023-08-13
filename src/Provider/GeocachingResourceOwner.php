@@ -6,23 +6,10 @@ use League\OAuth2\Client\Tool\ArrayAccessorTrait;
 
 class GeocachingResourceOwner implements ResourceOwnerInterface
 {
-
-    /**
-     * @var array
-     */
-    protected $response;
-
-    /**
-     * Domain
-     */
     protected string $domain;
 
-    /**
-     * @param string $resourceOwnerId
-     */
-    public function __construct(array $response, protected $resourceOwnerId)
+    public function __construct(protected array $response, protected string $resourceOwnerId)
     {
-        $this->response = $response;
     }
 
     /**
@@ -160,7 +147,7 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
      *
      * @return bool
      */
-    public function getOptedInFriendSharing()
+    public function getOptedInFriendSharing(): bool
     {
         return (bool) $this->response['optedInFriendSharing'];
     }
@@ -177,10 +164,8 @@ class GeocachingResourceOwner implements ResourceOwnerInterface
 
     /**
      * Return all of the owner details available as an array.
-     *
-     * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->response;
     }

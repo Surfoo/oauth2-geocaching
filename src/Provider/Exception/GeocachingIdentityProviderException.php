@@ -4,15 +4,12 @@ namespace League\OAuth2\Client\Provider\Exception;
 
 use Psr\Http\Message\ResponseInterface;
 
-class GeocachingIdentityProviderException extends IdentityProviderException
+final class GeocachingIdentityProviderException extends IdentityProviderException
 {
     /**
      * Creates client exception from response.
-     *
-     * @param  array $data Parsed response data
-     * @return IdentityProviderException
      */
-    public static function clientException(ResponseInterface $response, $data)
+    public static function clientException(ResponseInterface $response, array $data): IdentityProviderException
     {
         return static::fromResponse(
             $response,
@@ -22,11 +19,8 @@ class GeocachingIdentityProviderException extends IdentityProviderException
 
     /**
      * Creates oauth exception from response.
-     *
-     * @param  array $data Parsed response data
-     * @return IdentityProviderException
      */
-    public static function oauthException(ResponseInterface $response, $data)
+    public static function oauthException(ResponseInterface $response, array $data): IdentityProviderException
     {
         return static::fromResponse(
             $response,
@@ -36,11 +30,8 @@ class GeocachingIdentityProviderException extends IdentityProviderException
 
     /**
      * Creates identity exception from response.
-     *
-     * @param  string $message
-     * @return IdentityProviderException
      */
-    protected static function fromResponse(ResponseInterface $response, $message = null)
+    protected static function fromResponse(ResponseInterface $response, ?string $message = null): IdentityProviderException
     {
         return new static($message, $response->getStatusCode(), (string) $response->getBody());
     }

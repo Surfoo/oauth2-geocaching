@@ -26,26 +26,11 @@ class Geocaching extends AbstractProvider
 
     protected string $environment = 'production';
 
-    /**
-     * Main domain
-     *
-     * @var string
-     */
-    public $domain;
+    public string $domain;
 
-    /**
-     * Api domain
-     *
-     * @var string
-     */
-    public $apiDomain;
+    public string $apiDomain;
 
-    /**
-     * OAuth domain
-     *
-     * @var string
-     */
-    public $oAuthDomain;
+    public string $oAuthDomain;
 
     public $clientId;
 
@@ -53,11 +38,11 @@ class Geocaching extends AbstractProvider
 
     public $redirectUri;
 
-    public $response_type = 'code';
+    public string $response_type = 'code';
 
-    public $scope = '*';
+    public string $scope = '*';
 
-    public $pkceMethod = 'S256';
+    public string $pkceMethod = 'S256';
 
     private string $responseResourceOwnerId = 'referenceCode';
 
@@ -106,7 +91,7 @@ class Geocaching extends AbstractProvider
      *
      * @return array
      */
-    protected function getConfigurableOptions()
+    protected function getConfigurableOptions(): array
     {
         return array_merge($this->getRequiredOptions(), [
             'clientId',
@@ -181,18 +166,15 @@ class Geocaching extends AbstractProvider
         return $this->apiDomain . '/v1/users/me?' . http_build_query($query);
     }
 
-    /**
-     * @return string
-     */
-    public function getDefaultScopes()
+    public function getDefaultScopes(): array
     {
-        return $this->scope;
+        return [$this->scope];
     }
 
     /**
      * @inheritdoc
      */
-    protected function getPkceMethod()
+    protected function getPkceMethod(): string
     {
         return $this->pkceMethod;
     }
@@ -201,7 +183,7 @@ class Geocaching extends AbstractProvider
      * Check a provider response for errors.
      *
      * @link   https://api.groundspeak.com/documentation#responses
-     * @throws IdentityProviderException
+     * @throws GeocachingIdentityProviderException
      * @param  ResponseInterface $response
      * @param  array|string $data Parsed response data
      * @return void
