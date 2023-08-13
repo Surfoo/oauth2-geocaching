@@ -16,7 +16,6 @@ session_start();
 $provider = new Geocaching([
     'clientId'       => GEOCACHING_CLIENT_ID,
     'clientSecret'   => GEOCACHING_CLIENT_SECRET,
-    'response_type'  => 'code',
     'scope'          => '*',
     'redirectUri'    => GEOCACHING_CALLBACK,
     'environment'    => GEOCACHING_ENVIRONMENT,

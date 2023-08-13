@@ -26,7 +26,6 @@ class GeocachingTest extends TestCase
             'clientId' => 'mock_client_id',
             'clientSecret' => 'mock_secret',
             'redirectUri' => 'none',
-            'response_type' => 'code',
             'scope' => '*',
             'environment' => 'test',
             'pkceMethod' => 'S256',
@@ -59,7 +58,6 @@ class GeocachingTest extends TestCase
         ];
 
         $provider = new GeocachingProvider($options + [
-            'response_type'  => 'mock_response_type',
             'scope'          => '*',
         ]);
 
@@ -94,7 +92,6 @@ class GeocachingTest extends TestCase
         ];
 
         $provider = new GeocachingProvider($options + [
-            'response_type'  => 'mock_response_type',
             'scope'          => '*',
         ]);
 

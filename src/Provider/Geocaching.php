@@ -38,8 +38,6 @@ class Geocaching extends AbstractProvider
 
     public $redirectUri;
 
-    public string $response_type = 'code';
-
     public string $scope = '*';
 
     public string $pkceMethod = 'S256';
