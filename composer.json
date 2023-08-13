@@ -42,9 +42,9 @@
     },
     "scripts": {
         "phpstan": "vendor/bin/phpstan analyse",
-        "phpcs": "./vendor/bin/phpcs src --standard=psr2 --exclude=Generic.Files.LineLength -sp --colors",
-        "phpcbf": "./vendor/bin/phpcbf src --standard=psr2 --exclude=Generic.Files.LineLength -sp --colors",
-        "rector": "./vendor/bin/rector",
-        "phpunit": "XDEBUG_MODE=coverage ./vendor/bin/phpunit"
+        "phpcs":   "vendor/bin/phpcs  src --standard=psr2 --exclude=Generic.Files.LineLength -sp --colors",
+        "phpcbf":  "vendor/bin/phpcbf src --standard=psr2 --exclude=Generic.Files.LineLength -sp --colors",
+        "rector":  "vendor/bin/rector",
+        "phpunit": "XDEBUG_MODE=coverage vendor/bin/phpunit"
     }
 }
