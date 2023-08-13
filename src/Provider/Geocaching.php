@@ -2,8 +2,8 @@
 
 namespace League\OAuth2\Client\Provider;
 
+use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\GeocachingIdentityProviderException;
-use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
 use Psr\Http\Message\ResponseInterface;
@@ -12,40 +12,37 @@ class Geocaching extends AbstractProvider
 {
     use BearerAuthorizationTrait;
 
-    const DEV_DOMAIN = 'http://localhost:8000';
-    const DEV_API_DOMAIN = 'http://localhost:8000';
+    public const DEV_DOMAIN = 'http://localhost:8000';
+    public const DEV_API_DOMAIN = 'http://localhost:8000';
 
-    const PRODUCTION_DOMAIN = 'https://www.geocaching.com';
-    const STAGING_DOMAIN = 'https://staging.geocaching.com';
+    public const PRODUCTION_DOMAIN = 'https://www.geocaching.com';
+    public const STAGING_DOMAIN = 'https://staging.geocaching.com';
 
-    const PRODUCTION_OAUTH_DOMAIN = 'https://oauth.geocaching.com';
-    const STAGING_OAUTH_DOMAIN = 'https://oauth-staging.geocaching.com';
+    public const PRODUCTION_OAUTH_DOMAIN = 'https://oauth.geocaching.com';
+    public const STAGING_OAUTH_DOMAIN = 'https://oauth-staging.geocaching.com';
 
-    const PRODUCTION_API_DOMAIN = 'https://api.groundspeak.com';
-    const STAGING_API_DOMAIN = 'https://staging.api.groundspeak.com';
+    public const PRODUCTION_API_DOMAIN = 'https://api.groundspeak.com';
+    public const STAGING_API_DOMAIN = 'https://staging.api.groundspeak.com';
 
-    protected $environment = 'production';
+    protected string $environment = 'production';
 
-    /**
-     * Main domain
-     *
-     * @var string
-     */
-    public $domain;
+    public string $domain;
 
-    /**
-     * Api domain
-     *
-     * @var string
-     */
-    public $apiDomain;
+    public string $apiDomain;
 
-    /**
-     * OAuth domain
-     *
-     * @var string
-     */
-    public $oAuthDomain;
+    public string $oAuthDomain;
+
+    public $clientId;
+
+    public $clientSecret;
+
+    public $redirectUri;
+
+    public string $scope = '*';
+
+    public string $pkceMethod = 'S256';
+
+    private string $responseResourceOwnerId = 'referenceCode';
 
     /**
      * Constructs an OAuth 2.0 service provider.oAuthDomain
@@ -60,6 +57,8 @@ class Geocaching extends AbstractProvider
      */
     public function __construct(array $options = [], array $collaborators = [])
     {
+        $this->assertRequiredOptions($options);
+
         parent::__construct($options, $collaborators);
 
         switch ($this->environment) {
@@ -82,6 +81,49 @@ class Geocaching extends AbstractProvider
                 $this->domain = self::PRODUCTION_DOMAIN;
                 $this->apiDomain = self::PRODUCTION_API_DOMAIN;
                 $this->oAuthDomain = self::PRODUCTION_OAUTH_DOMAIN;
+        }
+    }
+
+    /**
+     * Returns all options that can be configured.
+     *
+     * @return array
+     */
+    protected function getConfigurableOptions(): array
+    {
+        return array_merge($this->getRequiredOptions(), [
+            'clientId',
+            'clientSecret',
+            'redirectUri',
+            'environment',
+            'pkceMethod',
+        ]);
+    }
+
+    /**
+     * Returns all options that are required.
+     *
+     * @return array
+     */
+    protected function getRequiredOptions()
+    {
+        return [
+            'clientId',
+            'clientSecret',
+            'redirectUri',
+            'environment',
+            'pkceMethod',
+        ];
+    }
+
+    private function assertRequiredOptions(array $options)
+    {
+        $missing = array_diff_key(array_flip($this->getRequiredOptions()), $options);
+
+        if (!empty($missing)) {
+            throw new InvalidArgumentException(
+                'Required options not defined: ' . implode(', ', array_keys($missing))
+            );
         }
     }
 
@@ -122,26 +164,26 @@ class Geocaching extends AbstractProvider
         return $this->apiDomain . '/v1/users/me?' . http_build_query($query);
     }
 
-    /**
-     * Get the default scopes used by this provider.
-     *
-     * This should not be a complete list of all scopes, but the minimum
-     * required for the provider user interface!
-     *
-     * @return array
-     */
-    protected function getDefaultScopes(): array
+    public function getDefaultScopes(): array
     {
-        return [];
+        return [$this->scope];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getPkceMethod(): string
+    {
+        return $this->pkceMethod;
     }
 
     /**
      * Check a provider response for errors.
      *
      * @link   https://api.groundspeak.com/documentation#responses
-     * @throws IdentityProviderException
+     * @throws GeocachingIdentityProviderException
      * @param  ResponseInterface $response
-     * @param  array $data Parsed response data
+     * @param  array|string $data Parsed response data
      * @return void
      */
     protected function checkResponse(ResponseInterface $response, $data): void
@@ -155,44 +197,10 @@ class Geocaching extends AbstractProvider
     }
 
     /**
-     * Generate a user object from a successful user details request.
-     *
-     * @param array $response
-     * @param AccessToken $token
-     * @return \League\OAuth2\Client\Provider\ResourceOwnerInterface
+     * @inheritdoc
      */
-    protected function createResourceOwner(array $response, AccessToken $token): ResourceOwnerInterface
+    protected function createResourceOwner(array $response, AccessToken $token)
     {
-        $user = new GeocachingResourceOwner($response);
-
-        return $user->setDomain($this->domain);
-    }
-
-    /**
-     * Generate a random CodeVerifier for PKCE
-     *
-     * @param int $length
-     *
-     * @return string
-     */
-    public static function createCodeVerifier(int $length = 128): string
-    {
-        if ($length < 43 || $length > 128) {
-            throw new \Exception('length must be beetween 43 and 128');
-        }
-
-        return bin2hex(random_bytes(floor($length / 2)));
-    }
-
-    /**
-     * Generate codeVerifier from the codeVerifier for PKCE
-     *
-     * @param  string $codeVerifier
-     * @return string
-     */
-    public static function createCodeChallenge(string $codeVerifier): string
-    {
-        $binarydata = pack('H*', hash('sha256', $codeVerifier));
-        return trim(strtr(base64_encode($binarydata), '+/', '-_'), "=");
+        return new GeocachingResourceOwner($response, $this->responseResourceOwnerId);
     }
 }

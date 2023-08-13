@@ -16,23 +16,17 @@ session_start();
 $provider = new Geocaching([
     'clientId'       => GEOCACHING_CLIENT_ID,
     'clientSecret'   => GEOCACHING_CLIENT_SECRET,
-    'response_type'  => 'code',
     'scope'          => '*',
     'redirectUri'    => GEOCACHING_CALLBACK,
-    'environment'    => GEOCACHING_ENVIRONMENT
+    'environment'    => GEOCACHING_ENVIRONMENT,
+    'pkceMethod'     => Geocaching::PKCE_METHOD_S256,
 ]);
 
 if (!isset($_GET['code'])) {
-    $_SESSION['codeVerifier']  = Geocaching::createCodeVerifier();
-    $_SESSION['codeChallenge'] = Geocaching::createCodeChallenge($_SESSION['codeVerifier']);
-
-    $pkce = ['code_challenge'        => $_SESSION['codeChallenge'],
-             'code_challenge_method' => 'S256',
-    ];
-
     // If we don't have an authorization code then get one
-    $authUrl = $provider->getAuthorizationUrl($pkce);
-    $_SESSION['oauth2state'] = $provider->getState();
+    $authUrl = $provider->getAuthorizationUrl();
+    $_SESSION['oauth2state']    = $provider->getState();
+    $_SESSION['oauth2pkceCode'] = $provider->getPkceCode();
     header('Location: ' . $authUrl);
     exit();
 
@@ -44,9 +38,10 @@ if (!isset($_GET['code'])) {
     // Try to get an access token (using the authorization code grant)
 
     try {
+        $provider->setPkceCode($_SESSION['oauth2pkceCode']);
+
         $token = $provider->getAccessToken('authorization_code', [
             'code'          => $_GET['code'],
-            'code_verifier' => $_SESSION['codeVerifier'],
         ]);
     } catch (GeocachingIdentityProviderException $e) {
         exit($e->getMessage());
