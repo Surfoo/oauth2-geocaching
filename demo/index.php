@@ -19,7 +19,6 @@ $provider = new Geocaching([
     'scope'          => '*',
     'redirectUri'    => GEOCACHING_CALLBACK,
     'environment'    => GEOCACHING_ENVIRONMENT,
-    'pkceMethod'     => Geocaching::PKCE_METHOD_S256,
 ]);
 
 if (!isset($_GET['code'])) {
