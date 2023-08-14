@@ -96,7 +96,6 @@ class Geocaching extends AbstractProvider
             'clientSecret',
             'redirectUri',
             'environment',
-            'pkceMethod',
         ]);
     }
 
@@ -112,7 +111,6 @@ class Geocaching extends AbstractProvider
             'clientSecret',
             'redirectUri',
             'environment',
-            'pkceMethod',
         ];
     }
 
