@@ -2,8 +2,6 @@
 
 namespace League\OAuth2\Client\Provider;
 
-use League\OAuth2\Client\Tool\ArrayAccessorTrait;
-
 class GeocachingResourceOwner implements ResourceOwnerInterface
 {
     protected string $domain;
