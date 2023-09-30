@@ -157,7 +157,7 @@ class Geocaching extends AbstractProvider
     {
         $query = ['fields' => 'referenceCode,findCount,hideCount,favoritePoints,' .
                               'username,membershipLevelId,joinedDateUtc,avatarUrl,bannerUrl,url,' .
-                              'homeCoordinates,geocacheLimits,optedInFriendSharing',
+                              'homeCoordinates,geocacheLimits',
                 ];
         return $this->apiDomain . '/v1/users/me?' . http_build_query($query);
     }
