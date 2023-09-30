@@ -21,7 +21,7 @@ jobs:
       matrix:
         php-version: [ '8.1', '8.2', '8.3' ]
     steps:
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v3"
       - uses: "shivammathur/setup-php@v2"
         with:
           php-version: "${{ matrix.php-version }}"
@@ -36,7 +36,7 @@ jobs:
     name: "Coding Standards"
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v3"
       - uses: "shivammathur/setup-php@v2"
         with:
           php-version: "latest"
@@ -55,7 +55,7 @@ jobs:
       matrix:
         php-version: [ '8.1', '8.2', '8.3' ]
     steps:
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v3"
       - uses: "shivammathur/setup-php@v2"
         with:
           php-version: "${{ matrix.php-version }}"
@@ -68,4 +68,4 @@ jobs:
       - name: "Run unit tests"
         run: "./vendor/bin/phpunit --colors=always --coverage-clover build/logs/clover.xml --coverage-text"
       - name: "Publish coverage report to Codecov"
-        uses: "codecov/codecov-action@v2"
+        uses: "codecov/codecov-action@v3"
