@@ -44,6 +44,18 @@ class Geocaching extends AbstractProvider
 
     private string $responseResourceOwnerId = 'referenceCode';
 
+    private array $resourceOwnerFieldsDefault = [
+        'referenceCode',
+        'findCount',
+        'hideCount',
+        'favoritePoints',
+        'username',
+        'membershipLevelId',
+        'joinedDateUtc',
+    ];
+
+    private array $resourceOwnerFields;
+
     /**
      * Constructs an OAuth 2.0 service provider.oAuthDomain
      *
@@ -155,9 +167,7 @@ class Geocaching extends AbstractProvider
      */
     public function getResourceOwnerDetailsUrl(AccessToken $token): string
     {
-        $query = ['fields' => 'referenceCode,findCount,hideCount,favoritePoints,' .
-                              'username,membershipLevelId,joinedDateUtc,avatarUrl,bannerUrl,url,' .
-                              'homeCoordinates,geocacheLimits',
+        $query = ['fields' => implode(',', $this->getResourceOwnerFields()),
                 ];
         return $this->apiDomain . '/v1/users/me?' . http_build_query($query);
     }
@@ -200,5 +210,20 @@ class Geocaching extends AbstractProvider
     protected function createResourceOwner(array $response, AccessToken $token)
     {
         return new GeocachingResourceOwner($response, $this->responseResourceOwnerId);
+    }
+
+    public function getResourceOwnerFields(): array
+    {
+        return $this->resourceOwnerFields ?? $this->resourceOwnerFieldsDefault;
+    }
+
+    /**
+     * Set the owner fields to retrieve from https://api.groundspeak.com/documentation#user
+     */
+    public function setResourceOwnerFields(array $resourceOwnerFields): self
+    {
+        $this->resourceOwnerFields = $resourceOwnerFields;
+
+        return $this;
     }
 }

@@ -48,7 +48,18 @@ if (!isset($_GET['code'])) {
     // Optional: Now you have a token you can look up a users profile data
     try {
         // We got an access token, let's now get the user's details
-        $user = $provider->getResourceOwner($token);
+        $user = $provider
+        ->setResourceOwnerFields(
+            [
+                'referenceCode',
+                'findCount',
+                'hideCount',
+                'favoritePoints',
+                'username',
+                'membershipLevelId',
+                'joinedDateUtc',
+            ])
+        ->getResourceOwner($token);
 
         // Use these details to create a new profile
         // printf('Hello %s!', $user->getReferenceCode());
@@ -57,7 +68,12 @@ if (!isset($_GET['code'])) {
         echo "</pre>";
     } catch (Exception $e) {
         // Failed to get user details
-        exit($e->getMessage());
+        echo "Error: " . $e->getMessage()."<br>";
+        echo "Response: <br>";
+        echo "<pre>";
+        print_r(json_decode($e->getResponseBody(), true));
+        echo "</pre>";
+        exit();
     }
 
     // Use this to interact with an API on the users behalf

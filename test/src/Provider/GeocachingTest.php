@@ -70,7 +70,7 @@ class GeocachingTest extends TestCase
 
         $this->assertEquals('http://localhost:8000/oauth/authorize.aspx', $provider->getBaseAuthorizationUrl());
         $this->assertEquals('http://localhost:8000/token', $provider->getBaseAccessTokenUrl([]));
-        $this->assertEquals('http://localhost:8000/v1/users/me?fields=referenceCode%2CfindCount%2ChideCount%2CfavoritePoints%2Cusername%2CmembershipLevelId%2CjoinedDateUtc%2CavatarUrl%2CbannerUrl%2Curl%2ChomeCoordinates%2CgeocacheLimits', $provider->getResourceOwnerDetailsUrl(new AccessToken(['access_token' => '1234'])));
+        $this->assertEquals('http://localhost:8000/v1/users/me?fields=referenceCode%2CfindCount%2ChideCount%2CfavoritePoints%2Cusername%2CmembershipLevelId%2CjoinedDateUtc', $provider->getResourceOwnerDetailsUrl(new AccessToken(['access_token' => '1234'])));
         $this->assertEquals(['*'], $provider->getDefaultScopes());
 
         $reflection = new ReflectionClass(get_class($provider));
@@ -221,5 +221,30 @@ class GeocachingTest extends TestCase
         $this->expectException(GeocachingIdentityProviderException::class);
 
         $checkResponse->invokeArgs($provider, [$mockedResponse, []]);
+    }
+
+    public function testGetResourceOwnerFields()
+    {
+        $provider = new MockProvider(['environment' => 'dev']);
+        $response = $provider->getResourceOwnerFields();
+
+        $this->assertEquals([
+            'referenceCode',
+            'findCount',
+            'hideCount',
+            'favoritePoints',
+            'username',
+            'membershipLevelId',
+            'joinedDateUtc',
+        ], $response);
+    }
+
+    public function testSetResourceOwnerFields()
+    {
+        $provider = new MockProvider(['environment' => 'dev']);
+        $response = $provider->setResourceOwnerFields(['referenceCode'])
+                             ->getResourceOwnerFields();
+
+        $this->assertEquals(['referenceCode'], $response);
     }
 }
