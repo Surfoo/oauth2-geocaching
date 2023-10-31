@@ -26,6 +26,13 @@ Take a look at `demo/index.php`
 $ ./vendor/bin/phpunit
 ```
 
+## With PHP >=7.3
+
+```
+docker-compose build
+docker-compose up -d
+docker run -it oauth2-geocaching-php7
+```
 ## License
 
 The MIT License (MIT). Please see [License File](https://github.com/Surfoo/oauth2-geocaching/blob/master/LICENSE) for more information.

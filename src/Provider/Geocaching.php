@@ -24,13 +24,13 @@ class Geocaching extends AbstractProvider
     public const PRODUCTION_API_DOMAIN = 'https://api.groundspeak.com';
     public const STAGING_API_DOMAIN = 'https://staging.api.groundspeak.com';
 
-    protected string $environment = 'production';
+    protected $environment = 'production';
 
-    public string $domain;
+    public $domain;
 
-    public string $apiDomain;
+    public $apiDomain;
 
-    public string $oAuthDomain;
+    public $oAuthDomain;
 
     public $clientId;
 
@@ -38,13 +38,13 @@ class Geocaching extends AbstractProvider
 
     public $redirectUri;
 
-    public string $scope = '*';
+    public $scope = '*';
 
-    public string $pkceMethod = 'S256';
+    public $pkceMethod = 'S256';
 
-    private string $responseResourceOwnerId = 'referenceCode';
+    private $responseResourceOwnerId = 'referenceCode';
 
-    private array $resourceOwnerFieldsDefault = [
+    private $resourceOwnerFieldsDefault = [
         'referenceCode',
         'findCount',
         'hideCount',
@@ -54,7 +54,7 @@ class Geocaching extends AbstractProvider
         'joinedDateUtc',
     ];
 
-    private array $resourceOwnerFields;
+    private $resourceOwnerFields;
 
     /**
      * Constructs an OAuth 2.0 service provider.oAuthDomain

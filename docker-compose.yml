@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+    php-cli:
+        build:
+            context: .
+        container_name: oauth2-geocaching-php7
+        working_dir: /app
+        tty: true
+        volumes:
+            - .:/app
+

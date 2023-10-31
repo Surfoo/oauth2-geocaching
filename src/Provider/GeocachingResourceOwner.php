@@ -4,10 +4,16 @@ namespace League\OAuth2\Client\Provider;
 
 class GeocachingResourceOwner implements ResourceOwnerInterface
 {
-    protected string $domain;
+    protected $domain;
 
-    public function __construct(protected array $response, protected string $resourceOwnerId)
+    protected $response;
+
+    protected $resourceOwnerId;
+
+    public function __construct(array $response, string $resourceOwnerId)
     {
+        $this->response = $response;
+        $this->resourceOwnerId = $resourceOwnerId;
     }
 
     /**
