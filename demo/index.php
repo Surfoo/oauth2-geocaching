@@ -4,6 +4,13 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 use League\OAuth2\Client\Provider\Geocaching;
 use League\OAuth2\Client\Provider\Exception\GeocachingIdentityProviderException;
+use League\OAuth2\Client\Plugin\TokenRefreshPlugin;
+use League\OAuth2\Client\Token\TokenSet;
+use League\OAuth2\Client\Token\TokenStorageInterface;
+use Http\Client\Common\PluginClientFactory;
+use Http\Discovery\Psr18ClientDiscovery;
+use Psr\Http\Client\ClientInterface;
+use Nyholm\Psr7\Request;
 
 define('GEOCACHING_CLIENT_ID', '');
 define('GEOCACHING_CLIENT_SECRET', '');
@@ -40,8 +47,13 @@ if (!isset($_GET['code'])) {
         $provider->setPkceCode($_SESSION['oauth2pkceCode']);
 
         $token = $provider->getAccessToken('authorization_code', [
-            'code'          => $_GET['code'],
+            'code' => $_GET['code'],
         ]);
+        $_SESSION['tokens'] = [
+            'access_token'  => $token->getToken(),
+            'refresh_token' => $token->getRefreshToken(),
+            'expires_in'    => $token->getExpires() ? ($token->getExpires() - time()) : 3600,
+        ];
     } catch (GeocachingIdentityProviderException $e) {
         exit($e->getMessage());
     }
@@ -66,6 +78,8 @@ if (!isset($_GET['code'])) {
         echo "<pre>";
         print_r($user->toArray());
         echo "</pre>";
+
+        $_SESSION['referenceCode'] = $user->getReferenceCode();
     } catch (Exception $e) {
         // Failed to get user details
         echo "Error: " . $e->getMessage()."<br>";
@@ -78,4 +92,47 @@ if (!isset($_GET['code'])) {
 
     // Use this to interact with an API on the users behalf
     // echo "Token: " . $token->getToken();
+
+    // Example: prepare a PSR-18 client with TokenRefreshPlugin to auto-refresh on 401
+    if (isset($_SESSION['tokens']) && !empty($_SESSION['referenceCode'])) {
+        $storage = new class implements TokenStorageInterface {
+            public function getTokens(string $referenceCode): ?TokenSet
+            {
+                return isset($_SESSION['tokens'])
+                    ? TokenSet::fromOAuthResponse($_SESSION['tokens'], $_SESSION['tokens']['refresh_token'] ?? null)
+                    : null;
+            }
+
+            public function saveTokens(string $referenceCode, TokenSet $tokens): void
+            {
+                $_SESSION['tokens'] = $tokens->toArray();
+            }
+
+            public function lockUser(string $referenceCode, int $timeoutSeconds = 30): bool
+            {
+                return true;
+            }
+
+            public function unlockUser(string $referenceCode): void
+            {
+            }
+
+            public function isUserLocked(string $referenceCode): bool
+            {
+                return false;
+            }
+        };
+
+        $refreshPlugin = new TokenRefreshPlugin(
+            referenceCode: $_SESSION['referenceCode'],
+            storage: $storage,
+            oauthProvider: $provider
+        );
+
+        /** @var ClientInterface $httpClient */
+        $httpClient = (new PluginClientFactory())->createClient(
+            Psr18ClientDiscovery::find(),
+            [$refreshPlugin]
+        );
+    }
 }
