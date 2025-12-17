@@ -29,7 +29,9 @@ use Psr\Log\NullLogger;
 class TokenRefreshPlugin implements Plugin
 {
     private const MAX_RETRY_ATTEMPTS     = 3;
-    private const LOCK_WAIT_MICROSECONDS = [100000, 250000, 500000]; // Progressive backoff
+    private const BACKOFF_MULTIPLIER     = 1.5;
+    private const MAX_BACKOFF_MS         = 2000;
+    private const BASE_BACKOFF_MS        = 100;
 
     public function __construct(
         private string $referenceCode,
@@ -47,7 +49,7 @@ class TokenRefreshPlugin implements Plugin
             function (ResponseInterface $response) use ($request, $first) {
                 // If we get a 401, try to refresh the token and retry
                 if ($response->getStatusCode() === 401) {
-                    $this->logger->debug('[GEOCACHING] Received 401, attempting token refresh', [
+                    $this->logger->warning('[GEOCACHING] Received 401, attempting token refresh', [
                         'reference_code' => $this->referenceCode,
                         'request_uri' => (string) $request->getUri(),
                     ]);
@@ -71,10 +73,10 @@ class TokenRefreshPlugin implements Plugin
     private function refreshTokenAndRetry(RequestInterface $request, callable $first): Promise
     {
         try {
-            $newTokens  = $this->refreshAccessToken();
+            $newTokens  = $this->refreshAccessToken(forceRefresh: true);
             $newRequest = $this->updateRequestWithNewToken($request, $newTokens);
 
-            $this->logger->info('[GEOCACHING] Token refreshed successfully, retrying request', [
+            $this->logger->notice('[GEOCACHING] Token refreshed successfully, retrying request', [
                 'reference_code' => $this->referenceCode,
                 'expires_at' => $newTokens->expiresAt->format('Y-m-d H:i:s'),
             ]);
@@ -106,13 +108,13 @@ class TokenRefreshPlugin implements Plugin
     /**
      * Refresh the access token with concurrency protection.
      */
-    private function refreshAccessToken(): TokenSet
+    private function refreshAccessToken(bool $forceRefresh = false): TokenSet
     {
         // Try to acquire lock, with retries for concurrent requests
         for ($attempt = 0; $attempt < $this->maxRetryAttempts; $attempt++) {
             if ($this->storage->lockUser($this->referenceCode)) {
                 try {
-                    return $this->performTokenRefresh();
+                    return $this->performTokenRefresh($forceRefresh);
                 } finally {
                     $this->storage->unlockUser($this->referenceCode);
                 }
@@ -120,7 +122,7 @@ class TokenRefreshPlugin implements Plugin
 
             // Another process is refreshing, wait and check if they succeeded
             if ($attempt < $this->maxRetryAttempts - 1) {
-                usleep(self::LOCK_WAIT_MICROSECONDS[$attempt] ?? 500000);
+                usleep($this->calculateBackoff($attempt));
 
                 // Check if the other process already refreshed the token
                 $tokens = $this->storage->getTokens($this->referenceCode);
@@ -139,7 +141,7 @@ class TokenRefreshPlugin implements Plugin
     /**
      * Perform the actual token refresh (must be called within lock).
      */
-    private function performTokenRefresh(): TokenSet
+    private function performTokenRefresh(bool $forceRefresh = false): TokenSet
     {
         // Get current tokens
         $currentTokens = $this->storage->getTokens($this->referenceCode);
@@ -147,8 +149,9 @@ class TokenRefreshPlugin implements Plugin
             throw new TokenStorageException("No tokens found for user {$this->referenceCode}");
         }
 
-        // Check if token was already refreshed by another process
-        if (!$currentTokens->isExpired()) {
+        // If we were called because of a 401, force a refresh even if the token
+        // is not expired. Some APIs may revoke tokens early.
+        if (!$forceRefresh && !$currentTokens->isExpired()) {
             $this->logger->debug('[GEOCACHING] Token is no longer expired, using existing token', [
                 'reference_code' => $this->referenceCode,
             ]);
@@ -254,5 +257,18 @@ class TokenRefreshPlugin implements Plugin
     private function updateRequestWithNewToken(RequestInterface $request, TokenSet $tokens): RequestInterface
     {
         return $request->withHeader('Authorization', $tokens->getAuthorizationHeader());
+    }
+
+    /**
+     * Calculate progressive backoff delay in microseconds.
+     */
+    private function calculateBackoff(int $attempt): int
+    {
+        $backoffMs = min(
+            self::BASE_BACKOFF_MS * pow(self::BACKOFF_MULTIPLIER, $attempt),
+            self::MAX_BACKOFF_MS
+        );
+
+        return (int)($backoffMs * 1000); // Convert to microseconds
     }
 }

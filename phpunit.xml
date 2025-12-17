@@ -10,6 +10,9 @@
   <testsuites>
     <testsuite name="Package Test Suite">
       <directory suffix=".php">./test/src/Provider</directory>
+      <directory suffix=".php">./test/src/Plugin</directory>
+      <directory suffix=".php">./test/src/Token</directory>
+      <directory suffix=".php">./test/src/Exception</directory>
     </testsuite>
   </testsuites>
   <source>
