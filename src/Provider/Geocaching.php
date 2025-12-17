@@ -32,32 +32,24 @@ class Geocaching extends AbstractProvider
 
     public string $oAuthDomain;
 
-    public $clientId;
+    protected $clientId;
 
-    public $clientSecret;
+    protected $clientSecret;
 
-    public $redirectUri;
+    protected $redirectUri;
 
-    public string $scope = '*';
+    public string $scope = GeocachingConfig::DEFAULT_SCOPE;
 
-    public string $pkceMethod = 'S256';
+    public string $pkceMethod = GeocachingConfig::DEFAULT_PKCE_METHOD;
 
-    private string $responseResourceOwnerId = 'referenceCode';
+    private string $responseResourceOwnerId = GeocachingConfig::RESPONSE_RESOURCE_OWNER_ID;
 
-    private array $resourceOwnerFieldsDefault = [
-        'referenceCode',
-        'findCount',
-        'hideCount',
-        'favoritePoints',
-        'username',
-        'membershipLevelId',
-        'joinedDateUtc',
-    ];
+    private array $resourceOwnerFieldsDefault = GeocachingConfig::DEFAULT_RESOURCE_OWNER_FIELDS;
 
     private array $resourceOwnerFields;
 
     /**
-     * Constructs an OAuth 2.0 service provider.oAuthDomain
+     * Constructs an OAuth 2.0 service provider.
      *
      * @param array $options An array of options to set on this provider.
      *     Options include `clientId`, `clientSecret`, `redirectUri`, and `state`.
@@ -70,30 +62,12 @@ class Geocaching extends AbstractProvider
     public function __construct(array $options = [], array $collaborators = [])
     {
         $this->assertRequiredOptions($options);
-
         parent::__construct($options, $collaborators);
 
-        switch ($this->environment) {
-            case 'dev':
-            case 'development':
-            case 'docker':
-                $this->domain = self::DEV_DOMAIN;
-                $this->apiDomain = self::DEV_DOMAIN;
-                $this->oAuthDomain = self::DEV_DOMAIN;
-                break;
-            case 'staging':
-            case 'qa':
-                $this->domain = self::STAGING_DOMAIN;
-                $this->apiDomain = self::STAGING_API_DOMAIN;
-                $this->oAuthDomain = self::STAGING_OAUTH_DOMAIN;
-                break;
-            case 'production':
-            case 'prod':
-            default:
-                $this->domain = self::PRODUCTION_DOMAIN;
-                $this->apiDomain = self::PRODUCTION_API_DOMAIN;
-                $this->oAuthDomain = self::PRODUCTION_OAUTH_DOMAIN;
-        }
+        $config = GeocachingConfig::getEnvironmentConfig($this->environment);
+        $this->domain = $config['domain'];
+        $this->apiDomain = $config['apiDomain'];
+        $this->oAuthDomain = $config['oAuthDomain'];
     }
 
     /**
@@ -116,7 +90,7 @@ class Geocaching extends AbstractProvider
      *
      * @return array
      */
-    protected function getRequiredOptions()
+    protected function getRequiredOptions(): array
     {
         return [
             'clientId',
@@ -126,7 +100,7 @@ class Geocaching extends AbstractProvider
         ];
     }
 
-    private function assertRequiredOptions(array $options)
+    private function assertRequiredOptions(array $options): void
     {
         $missing = array_diff_key(array_flip($this->getRequiredOptions()), $options);
 

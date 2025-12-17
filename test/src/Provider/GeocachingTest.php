@@ -8,12 +8,13 @@ use League\OAuth2\Client\Test\Geocaching as MockProvider;
 use League\OAuth2\Client\Provider\Geocaching as GeocachingProvider;
 use League\OAuth2\Client\Provider\GeocachingResourceOwner;
 use League\OAuth2\Client\Token\AccessToken;
-use Mockery;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use Psr\Http\Message\ResponseInterface;
 use ReflectionClass;
 use ReflectionProperty;
 
+#[AllowMockObjectsWithoutExpectations]
 class GeocachingTest extends TestCase
 {
 
@@ -63,7 +64,6 @@ class GeocachingTest extends TestCase
 
         foreach ($options as $key => $expected) {
             $property = new ReflectionProperty(GeocachingProvider::class, $key);
-            $property->setAccessible(true);
 
             $this->assertEquals($expected, $property->getValue($provider));
         }
@@ -76,7 +76,6 @@ class GeocachingTest extends TestCase
         $reflection = new ReflectionClass(get_class($provider));
 
         $getPkceMethod = $reflection->getMethod('getPkceMethod');
-        $getPkceMethod->setAccessible(true);
  
         $this->assertEquals($options['pkceMethod'], $getPkceMethod->invoke($provider));
     }
@@ -98,9 +97,24 @@ class GeocachingTest extends TestCase
         $reflection = new ReflectionClass(get_class($provider));
 
         $getConfigurableOptions = $reflection->getMethod('getConfigurableOptions');
-        $getConfigurableOptions->setAccessible(true);
 
         $this->assertIsArray($getConfigurableOptions->invoke($provider));
+    }
+
+    public function testStagingEnvironmentDomains()
+    {
+        $provider = new GeocachingProvider([
+            'clientId'       => 'mock_client_id',
+            'clientSecret'   => 'mock_secret',
+            'environment'    => 'staging',
+            'pkceMethod'     => 'S256',
+            'redirectUri'    => 'none',
+            'scope'          => '*',
+        ]);
+
+        $this->assertEquals('https://staging.geocaching.com', $this->getProperty($provider, 'domain'));
+        $this->assertEquals('https://staging.api.groundspeak.com', $this->getProperty($provider, 'apiDomain'));
+        $this->assertEquals('https://oauth-staging.geocaching.com', $this->getProperty($provider, 'oAuthDomain'));
     }
 
     public function testResourceOwnerDetails()
@@ -148,11 +162,17 @@ class GeocachingTest extends TestCase
         $this->assertEquals('https://coord.info/PR1QQQP', $data['url']);
     }
 
+    private function getProperty(object $object, string $name): mixed
+    {
+        $property = new ReflectionProperty($object, $name);
+
+        return $property->getValue($object);
+    }
+
     public function testCheckResponse()
     {
-        $mockedResponse = Mockery::mock(ResponseInterface::class);
-        // $response->shouldIgnoreMissing();
-        $mockedResponse->shouldReceive('getStatusCode');
+        $mockedResponse = $this->createMock(ResponseInterface::class);
+        $mockedResponse->expects($this->any())->method('getStatusCode')->willReturn(200);
 
         $options = [
             'clientId'       => 'mock_client_id',
@@ -166,17 +186,15 @@ class GeocachingTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($provider));
         $checkResponse = $reflection->getMethod('checkResponse');
-        $checkResponse->setAccessible(true);
 
         $this->assertNull($checkResponse->invokeArgs($provider, [$mockedResponse, []]));
     }
 
     public function testCheckResponseWithError()
     {
-        $mockedResponse = Mockery::mock(ResponseInterface::class);
-        // $response->shouldIgnoreMissing();
-        $mockedResponse->shouldNotReceive('getStatusCode');
-        $mockedResponse->shouldReceive('getBody');
+        $mockedResponse = $this->createMock(ResponseInterface::class);
+        $mockedResponse->expects($this->once())->method('getStatusCode')->willReturn(400);
+        $mockedResponse->expects($this->any())->method('getBody')->willReturn($this->createMock(\Psr\Http\Message\StreamInterface::class));
 
         $options = [
             'clientId'       => 'mock_client_id',
@@ -190,19 +208,18 @@ class GeocachingTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($provider));
         $checkResponse = $reflection->getMethod('checkResponse');
-        $checkResponse->setAccessible(true);
 
         $this->expectException(GeocachingIdentityProviderException::class);
 
-        $checkResponse->invokeArgs($provider, [$mockedResponse, ['error' => 'Bad rssequest']]);
+        $checkResponse->invokeArgs($provider, [$mockedResponse, ['error' => 'Bad request']]);
     }
 
     public function testCheckResponseWithClientError()
     {
-        $mockedResponse = Mockery::mock(ResponseInterface::class);
-        $mockedResponse->shouldReceive('getStatusCode')->andReturn(401);
-        $mockedResponse->shouldReceive('getReasonPhrase')->andReturn('Unauthorized');
-        $mockedResponse->shouldReceive('getBody');
+        $mockedResponse = $this->createMock(ResponseInterface::class);
+        $mockedResponse->expects($this->exactly(2))->method('getStatusCode')->willReturn(401);
+        $mockedResponse->expects($this->once())->method('getReasonPhrase')->willReturn('Unauthorized');
+        $mockedResponse->expects($this->any())->method('getBody')->willReturn($this->createMock(\Psr\Http\Message\StreamInterface::class));
 
         $options = [
             'clientId'       => 'mock_client_id',
@@ -216,7 +233,6 @@ class GeocachingTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($provider));
         $checkResponse = $reflection->getMethod('checkResponse');
-        $checkResponse->setAccessible(true);
 
         $this->expectException(GeocachingIdentityProviderException::class);
 
