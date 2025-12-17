@@ -73,4 +73,28 @@ class GeocachingConfigTest extends TestCase
         $this->assertEquals('https://staging.api.groundspeak.com', $config['apiDomain']);
         $this->assertEquals('https://oauth-staging.geocaching.com', $config['oAuthDomain']);
     }
+
+    public function testcreateMergesOverrides(): void
+    {
+        $customConfig = GeocachingConfig::create('dev', [
+            'apiDomain' => 'https://custom-api.example.com',
+        ]);
+
+        $this->assertEquals('http://localhost:8000', $customConfig['domain']); // from dev base
+        $this->assertEquals('https://custom-api.example.com', $customConfig['apiDomain']); // custom override
+        $this->assertEquals('http://localhost:8000', $customConfig['oAuthDomain']); // from dev base
+    }
+
+    public function testcreateFiltersEmptyOverrides(): void
+    {
+        $customConfig = GeocachingConfig::create('production', [
+            'domain' => 'https://custom.example.com',
+            'apiDomain' => '',  // Should be filtered out
+            'oAuthDomain' => null,  // Should be filtered out
+        ]);
+
+        $this->assertEquals('https://custom.example.com', $customConfig['domain']);
+        $this->assertEquals('https://api.groundspeak.com', $customConfig['apiDomain']); // production default
+        $this->assertEquals('https://oauth.geocaching.com', $customConfig['oAuthDomain']); // production default
+    }
 }

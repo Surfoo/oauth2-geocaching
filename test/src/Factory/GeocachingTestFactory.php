@@ -82,4 +82,50 @@ class GeocachingTestFactory
             'redirectUri'  => 'http://test.local/callback',
         ]);
     }
+
+    /**
+     * Create a provider with completely custom URLs.
+     */
+    public static function createWithCustomUrls(
+        string $domain,
+        string $apiDomain,
+        string $oAuthDomain,
+        array $overrides = []
+    ): Geocaching {
+        $defaults = [
+            'clientId'     => 'custom-client-id',
+            'clientSecret' => 'custom-client-secret',
+            'environment'  => 'dev', // Base environment (required)
+            'redirectUri'  => 'http://localhost:3000/callback',
+            'domain'       => $domain,
+            'apiDomain'    => $apiDomain,
+            'oAuthDomain'  => $oAuthDomain,
+        ];
+
+        return new Geocaching(array_merge($defaults, $overrides));
+    }
+
+    /**
+     * Create a provider with Docker/local development setup.
+     */
+    public static function createForDocker(int $port = 8080): Geocaching
+    {
+        return self::createWithCustomUrls(
+            "http://localhost:{$port}",
+            "http://localhost:{$port}/api",
+            "http://localhost:{$port}/oauth"
+        );
+    }
+
+    /**
+     * Create a provider for local development with custom API endpoints.
+     */
+    public static function createForLocalDev(string $baseUrl = 'http://localhost:3000'): Geocaching
+    {
+        return self::createWithCustomUrls(
+            $baseUrl,
+            "{$baseUrl}/api/v1",
+            "{$baseUrl}/oauth"
+        );
+    }
 }

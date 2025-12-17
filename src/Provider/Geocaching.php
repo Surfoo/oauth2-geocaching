@@ -49,25 +49,48 @@ class Geocaching extends AbstractProvider
     private array $resourceOwnerFields;
 
     /**
-     * Constructs an OAuth 2.0 service provider.
+     * Constructs an OAuth 2.0 service provider for Geocaching.
      *
      * @param array $options An array of options to set on this provider.
-     *     Options include `clientId`, `clientSecret`, `redirectUri`, and `state`.
-     *     Individual providers may introduce more options, as needed.
+     *     Standard options: `clientId`, `clientSecret`, `redirectUri`, `environment`.
+     *     Custom URL options: `domain`, `apiDomain`, `oAuthDomain` (override environment defaults).
      * @param array $collaborators An array of collaborators that may be used to
      *     override this provider's default behavior. Collaborators include
      *     `grantFactory`, `requestFactory`, and `httpClient`.
-     *     Individual providers may introduce more collaborators, as needed.
+     *
+     * @example
+     * ```php
+     * // Standard usage with predefined environment
+     * $provider = new Geocaching([
+     *     'clientId' => 'your-client-id',
+     *     'clientSecret' => 'your-client-secret',
+     *     'environment' => 'staging',
+     *     'redirectUri' => 'https://app.example.com/callback'
+     * ]);
+     *
+     * // Custom URLs for development
+     * $provider = new Geocaching([
+     *     'clientId' => 'dev-client-id',
+     *     'clientSecret' => 'dev-client-secret',
+     *     'environment' => 'dev',
+     *     'redirectUri' => 'http://localhost:3000/callback',
+     *     'domain' => 'https://my-geocaching.local',
+     *     'apiDomain' => 'https://api.my-geocaching.local'
+     * ]);
+     * ```
      */
     public function __construct(array $options = [], array $collaborators = [])
     {
         $this->assertRequiredOptions($options);
         parent::__construct($options, $collaborators);
 
+        // Get environment defaults
         $config = GeocachingConfig::getEnvironmentConfig($this->environment);
-        $this->domain = $config['domain'];
-        $this->apiDomain = $config['apiDomain'];
-        $this->oAuthDomain = $config['oAuthDomain'];
+
+        // Allow custom URL overrides, fallback to environment defaults
+        $this->domain = $options['domain'] ?? $config['domain'];
+        $this->apiDomain = $options['apiDomain'] ?? $config['apiDomain'];
+        $this->oAuthDomain = $options['oAuthDomain'] ?? $config['oAuthDomain'];
     }
 
     /**
@@ -82,6 +105,9 @@ class Geocaching extends AbstractProvider
             'clientSecret',
             'redirectUri',
             'environment',
+            'domain',         // Allow custom domain override
+            'apiDomain',      // Allow custom API domain override
+            'oAuthDomain',    // Allow custom OAuth domain override
         ]);
     }
 
