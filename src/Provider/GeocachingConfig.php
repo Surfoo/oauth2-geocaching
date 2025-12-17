@@ -114,4 +114,31 @@ final class GeocachingConfig
     {
         return self::VALID_ENVIRONMENTS;
     }
+
+    /**
+     * Create a custom configuration with URL overrides.
+     *
+     * Creates a configuration array based on a predefined environment with optional URL overrides.
+     * Empty strings and null values in overrides are automatically filtered out.
+     *
+     * @param string $baseEnvironment Base environment to start from ('dev', 'staging', 'production', etc.)
+     * @param array  $overrides       Custom URLs to override (domain, apiDomain, oAuthDomain)
+     * @return array The merged configuration with base environment + overrides
+     *
+     * @example
+     * ```php
+     * $config = GeocachingConfig::create('staging', [
+     *     'apiDomain' => 'https://my-api.example.com',
+     * ]);
+     * // Result: staging URLs + custom API domain
+     * ```
+     */
+    public static function create(string $baseEnvironment, array $overrides = []): array
+    {
+        $baseConfig = self::getEnvironmentConfig($baseEnvironment);
+
+        return array_merge($baseConfig, array_filter($overrides, function ($value) {
+            return $value !== null && $value !== '';
+        }));
+    }
 }
