@@ -9,23 +9,21 @@ final class GeocachingIdentityProviderException extends IdentityProviderExceptio
     /**
      * Creates client exception from response.
      */
-    public static function clientException(ResponseInterface $response, array $data): IdentityProviderException
+    public static function clientException(ResponseInterface $response, $data): IdentityProviderException
     {
-        return static::fromResponse(
-            $response,
-            $data['message'] ?? $response->getReasonPhrase()
-        );
+        $message = is_string($data) ? $data : ($data['message'] ?? $response->getReasonPhrase());
+
+        return static::fromResponse($response, $message);
     }
 
     /**
      * Creates oauth exception from response.
      */
-    public static function oauthException(ResponseInterface $response, array $data): IdentityProviderException
+    public static function oauthException(ResponseInterface $response, $data): IdentityProviderException
     {
-        return static::fromResponse(
-            $response,
-            $data['error'] ?? $response->getReasonPhrase()
-        );
+        $message = is_string($data) ? $data : ($data['error'] ?? $response->getReasonPhrase());
+
+        return static::fromResponse($response, $message);
     }
 
     /**

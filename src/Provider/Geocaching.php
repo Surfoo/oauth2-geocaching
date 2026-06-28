@@ -32,68 +32,65 @@ class Geocaching extends AbstractProvider
 
     public string $oAuthDomain;
 
-    public $clientId;
+    protected $clientId;
 
-    public $clientSecret;
+    protected $clientSecret;
 
-    public $redirectUri;
+    protected $redirectUri;
 
-    public string $scope = '*';
+    public string $scope = GeocachingConfig::DEFAULT_SCOPE;
 
-    public string $pkceMethod = 'S256';
+    public string $pkceMethod = GeocachingConfig::DEFAULT_PKCE_METHOD;
 
-    private string $responseResourceOwnerId = 'referenceCode';
+    private string $responseResourceOwnerId = GeocachingConfig::RESPONSE_RESOURCE_OWNER_ID;
 
-    private array $resourceOwnerFieldsDefault = [
-        'referenceCode',
-        'findCount',
-        'hideCount',
-        'favoritePoints',
-        'username',
-        'membershipLevelId',
-        'joinedDateUtc',
-    ];
+    private array $resourceOwnerFieldsDefault = GeocachingConfig::DEFAULT_RESOURCE_OWNER_FIELDS;
 
     private array $resourceOwnerFields;
 
     /**
-     * Constructs an OAuth 2.0 service provider.oAuthDomain
+     * Constructs an OAuth 2.0 service provider for Geocaching.
      *
      * @param array $options An array of options to set on this provider.
-     *     Options include `clientId`, `clientSecret`, `redirectUri`, and `state`.
-     *     Individual providers may introduce more options, as needed.
+     *     Standard options: `clientId`, `clientSecret`, `redirectUri`, `environment`.
+     *     Custom URL options: `domain`, `apiDomain`, `oAuthDomain` (override environment defaults).
      * @param array $collaborators An array of collaborators that may be used to
      *     override this provider's default behavior. Collaborators include
      *     `grantFactory`, `requestFactory`, and `httpClient`.
-     *     Individual providers may introduce more collaborators, as needed.
+     *
+     * @example
+     * ```php
+     * // Standard usage with predefined environment
+     * $provider = new Geocaching([
+     *     'clientId' => 'your-client-id',
+     *     'clientSecret' => 'your-client-secret',
+     *     'environment' => 'staging',
+     *     'redirectUri' => 'https://app.example.com/callback'
+     * ]);
+     *
+     * // Custom URLs for development
+     * $provider = new Geocaching([
+     *     'clientId' => 'dev-client-id',
+     *     'clientSecret' => 'dev-client-secret',
+     *     'environment' => 'dev',
+     *     'redirectUri' => 'http://localhost:3000/callback',
+     *     'domain' => 'https://my-geocaching.local',
+     *     'apiDomain' => 'https://api.my-geocaching.local'
+     * ]);
+     * ```
      */
     public function __construct(array $options = [], array $collaborators = [])
     {
         $this->assertRequiredOptions($options);
-
         parent::__construct($options, $collaborators);
 
-        switch ($this->environment) {
-            case 'dev':
-            case 'development':
-            case 'docker':
-                $this->domain = self::DEV_DOMAIN;
-                $this->apiDomain = self::DEV_DOMAIN;
-                $this->oAuthDomain = self::DEV_DOMAIN;
-                break;
-            case 'staging':
-            case 'qa':
-                $this->domain = self::STAGING_DOMAIN;
-                $this->apiDomain = self::STAGING_API_DOMAIN;
-                $this->oAuthDomain = self::STAGING_OAUTH_DOMAIN;
-                break;
-            case 'production':
-            case 'prod':
-            default:
-                $this->domain = self::PRODUCTION_DOMAIN;
-                $this->apiDomain = self::PRODUCTION_API_DOMAIN;
-                $this->oAuthDomain = self::PRODUCTION_OAUTH_DOMAIN;
-        }
+        // Get environment defaults
+        $config = GeocachingConfig::getEnvironmentConfig($this->environment);
+
+        // Allow custom URL overrides, fallback to environment defaults
+        $this->domain = $options['domain'] ?? $config['domain'];
+        $this->apiDomain = $options['apiDomain'] ?? $config['apiDomain'];
+        $this->oAuthDomain = $options['oAuthDomain'] ?? $config['oAuthDomain'];
     }
 
     /**
@@ -108,6 +105,9 @@ class Geocaching extends AbstractProvider
             'clientSecret',
             'redirectUri',
             'environment',
+            'domain',         // Allow custom domain override
+            'apiDomain',      // Allow custom API domain override
+            'oAuthDomain',    // Allow custom OAuth domain override
         ]);
     }
 
@@ -116,7 +116,7 @@ class Geocaching extends AbstractProvider
      *
      * @return array
      */
-    protected function getRequiredOptions()
+    protected function getRequiredOptions(): array
     {
         return [
             'clientId',
@@ -126,7 +126,7 @@ class Geocaching extends AbstractProvider
         ];
     }
 
-    private function assertRequiredOptions(array $options)
+    private function assertRequiredOptions(array $options): void
     {
         $missing = array_diff_key(array_flip($this->getRequiredOptions()), $options);
 
