@@ -86,13 +86,6 @@ $provider = new Geocaching(array_merge([
     'clientSecret' => 'client-secret',
     'redirectUri' => 'https://app.company.com/callback',
 ], $config));
-
-// Method 3: Factory helpers for common patterns
-use League\OAuth2\Client\Test\Factory\GeocachingTestFactory;
-
-$provider = GeocachingTestFactory::createForDocker(9000);
-// or
-$provider = GeocachingTestFactory::createForLocalDev('http://192.168.1.100:8080');
 ```
 
 #### Factory Helpers for Common Patterns
