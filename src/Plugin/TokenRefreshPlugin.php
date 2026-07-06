@@ -46,7 +46,7 @@ class TokenRefreshPlugin implements Plugin
     public function handleRequest(RequestInterface $request, callable $next, callable $first): Promise
     {
         return $next($request)->then(
-            function (ResponseInterface $response) use ($request, $first) {
+            function (ResponseInterface $response) use ($request, $next) {
                 // If we get a 401, try to refresh the token and retry
                 if ($response->getStatusCode() === 401) {
                     $this->logger->warning('[GEOCACHING] Received 401, attempting token refresh', [
@@ -55,7 +55,7 @@ class TokenRefreshPlugin implements Plugin
                     ]);
 
                     // Unwrap the refreshed call to return a ResponseInterface (avoid Promise nesting)
-                    return $this->refreshTokenAndRetry($request, $first)->wait();
+                    return $this->refreshTokenAndRetry($request, $next)->wait();
                 }
 
                 return $response;
@@ -70,7 +70,7 @@ class TokenRefreshPlugin implements Plugin
     /**
      * Refresh the token and retry the original request.
      */
-    private function refreshTokenAndRetry(RequestInterface $request, callable $first): Promise
+    private function refreshTokenAndRetry(RequestInterface $request, callable $next): Promise
     {
         try {
             $newTokens  = $this->refreshAccessToken(forceRefresh: true);
@@ -81,7 +81,8 @@ class TokenRefreshPlugin implements Plugin
                 'expires_at' => $newTokens->expiresAt->format('Y-m-d H:i:s'),
             ]);
 
-            return $first($newRequest)->then(
+            // Use $next (not $first) to skip this plugin on retry — prevents infinite loop on 401
+            return $next($newRequest)->then(
                 function (ResponseInterface $response) {
                     return $response;
                 },
