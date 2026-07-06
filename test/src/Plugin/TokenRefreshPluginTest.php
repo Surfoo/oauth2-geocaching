@@ -48,12 +48,18 @@ class TokenRefreshPluginTest extends TestCase
 
         $plugin = new TokenRefreshPlugin($reference, $storage, $provider);
 
+        // First call → 401, second call (retry with new token) → 200
         $capturedRequest = null;
-        $next = fn ($request) => new FulfilledPromise(new Response(401));
-        $first = function ($request) use (&$capturedRequest) {
+        $callCount = 0;
+        $next = function ($request) use (&$capturedRequest, &$callCount) {
+            $callCount++;
+            if ($callCount === 1) {
+                return new FulfilledPromise(new Response(401));
+            }
             $capturedRequest = $request;
             return new FulfilledPromise(new Response(200));
         };
+        $first = fn ($request) => new FulfilledPromise(new Response(500)); // must never be called
 
         $response = $plugin->handleRequest(new Request('GET', 'https://example.com'), $next, $first)->wait();
 
