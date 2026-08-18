@@ -19,14 +19,4 @@ class TokenRefreshException extends \Exception
     {
         return $this->responseData;
     }
-
-    public static function fromOAuthResponse(\Throwable $previous, ?array $responseData = null): self
-    {
-        return new self(
-            'OAuth provider error: ' . $previous->getMessage(),
-            $previous->getCode(),
-            $previous,
-            $responseData
-        );
-    }
 }

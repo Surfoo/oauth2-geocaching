@@ -17,18 +17,6 @@ class TokenRefreshExceptionTest extends TestCase
         self::assertSame(['error' => 'invalid_token'], $exception->getResponseData());
     }
 
-    public function testFactoryWrapsPrevious(): void
-    {
-        $previous = new \RuntimeException('oauth down', 500);
-
-        $exception = TokenRefreshException::fromOAuthResponse($previous, ['foo' => 'bar']);
-
-        self::assertSame('OAuth provider error: oauth down', $exception->getMessage());
-        self::assertSame(500, $exception->getCode());
-        self::assertSame($previous, $exception->getPrevious());
-        self::assertSame(['foo' => 'bar'], $exception->getResponseData());
-    }
-
     public function testRefreshTokenExpiredExtendsTokenRefreshException(): void
     {
         $expired = new RefreshTokenExpiredException('expired');
